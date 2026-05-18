@@ -1,0 +1,50 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "choose_date_format": "请选择您偏好的日期格式：",
+    "date_format": {
+      "dmy": "1️⃣ DD.MM.YY",
+      "mdy": "2️⃣ MM.DD.YY"
+    },
+    "complete": "✅ 设置完成。\n\n使用方法：\n\n进入国家：\n`/in Indonesia today`\n\n离开国家：\n`/out Indonesia 30.08.26`\n\n示例：\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\n报告：\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\n机器人自动：\n• 按日历年跟踪停留\n• 按滚动365天跟踪停留\n• 计算距离183天阈值剩余天数\n• 在达到阈值前发出警告\n\n可随时在 /settings 中更改语言或日期格式\n\n请先输入您当前所在的国家。"
+  },
+  "start": {
+    "welcome_back": "欢迎回来，{name}！\n\n一切就绪。使用 `/in 国家 日期` 记录停留，或打开 `/report`。"
+  },
+  "in": {
+    "country_not_recognized": "❌ 无法识别国家。\n\n请输入有效的国家名称。\n\n示例：\n`/in Thailand today`",
+    "success": "✅ 已进入 {flag} {country}，日期 {date}。",
+    "invalid_usage": "格式：`/in 国家 日期`\n\n示例：`/in Thailand today`",
+    "invalid_date": "❌ 日期无效。\n\n示例：`/in Thailand today`",
+    "not_onboarded": "请先使用 /start 完成设置。",
+    "current_stay": "当前停留:\n{days} 天",
+    "year_totals_header": "{year} 年合计:",
+    "calendar_year_line": "• 日历年: {days} 天",
+    "rolling_line": "• 滚动365天: {days} 天",
+    "remaining_line": "距离183天阈值还剩:\n{days} 天"
+  },
+  "out": {
+    "success": "{flag} 已离开 {country}，{date}",
+    "invalid_usage": "格式：`/out 国家 日期`",
+    "invalid_date": "❌ 日期无效。",
+    "not_onboarded": "请先使用 /start 完成设置。",
+    "no_open_stay": "未找到 {country} 的开放停留。",
+    "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
+    "exit_before_entry": "❌ 离开日期不能早于入境日期。",
+    "duration": "停留时长:\n{days} 天",
+    "year_totals_header": "{year} 年合计:",
+    "calendar_year_line": "• 日历年: {days} 天",
+    "rolling_line": "• 滚动365天: {days} 天",
+    "remaining_line": "距离183天阈值还剩:\n{days} 天"
+  },
+  "stay": {
+    "duplicate_exists": "⚠️ 此停留已存在:\n\n{stay_period}\n\n如有误，可删除后输入正确日期。",
+    "overlap_exists": "⚠️ 与现有停留冲突:\n\n{stay_period}\n\n如有误，可删除后输入正确日期。",
+    "present": "至今",
+    "remove_button": "删除 {country} {range}",
+    "removed": "🗑 停留已删除。\n\n现在可以输入正确的日期。",
+    "remove_not_found": "未找到停留或已删除。",
+    "remove_forbidden": "无法删除此停留。",
+    "gap_warning": "⚠️ 停留之间存在未记录的时期:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n（{gap_days} 天）\n\n您可能需要添加另一个国家。"
+  }
+}

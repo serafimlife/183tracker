@@ -1,7 +1,35 @@
 [project]
 name = "183days-rule-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Telegram bot for tracking tax residency under the 183-day rule"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.15,<4",
+    "python-dotenv>=1.0",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "pydantic-settings>=2.0",
+    "alembic>=1.13",
+    "pycountry>=26.2.16",
+]
+
+[project.scripts]
+bot = "app.bot.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

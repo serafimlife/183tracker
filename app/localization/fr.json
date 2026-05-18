@@ -1,0 +1,50 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "choose_date_format": "Choisissez votre format de date préféré :",
+    "date_format": {
+      "dmy": "1️⃣ JJ.MM.AA",
+      "mdy": "2️⃣ MM.JJ.AA"
+    },
+    "complete": "✅ Configuration terminée.\n\nComment utiliser le bot :\n\nEntrer dans un pays :\n`/in Indonesia today`\n\nQuitter un pays :\n`/out Indonesia 30.08.26`\n\nExemples :\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\nRapports :\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\nLe bot automatiquement :\n• suit les séjours par année civile\n• suit les séjours sur 365 jours glissants\n• calcule les jours restants avant le seuil de 183 jours\n• vous avertit avant d'atteindre les seuils\n\nLangue et format de date modifiables dans /settings\n\nCommencez par le pays où vous vous trouvez actuellement."
+  },
+  "start": {
+    "welcome_back": "Bon retour, {name} !\n\nTout est prêt. Enregistrez un séjour avec `/in Pays date` ou ouvrez `/report`."
+  },
+  "in": {
+    "country_not_recognized": "❌ Pays non reconnu.\n\nEntrez un nom de pays valide.\n\nExemple :\n`/in Thailand today`",
+    "success": "✅ Entrée {flag} {country} le {date}.",
+    "invalid_usage": "Format : `/in Pays date`\n\nExemple : `/in Thailand today`",
+    "invalid_date": "❌ Date invalide.\n\nExemple : `/in Thailand today`",
+    "not_onboarded": "Terminez d'abord la configuration avec /start.",
+    "current_stay": "Séjour en cours :\n{days} jours",
+    "year_totals_header": "Totaux {year} :",
+    "calendar_year_line": "• Année civile : {days} jours",
+    "rolling_line": "• 365 jours glissants : {days} jours",
+    "remaining_line": "Restant avant le seuil de 183 jours :\n{days} jours"
+  },
+  "out": {
+    "success": "{flag} Sortie de {country} le {date}.",
+    "invalid_usage": "Format : `/out Pays date`",
+    "invalid_date": "❌ Date invalide.",
+    "not_onboarded": "Terminez d'abord la configuration avec /start.",
+    "no_open_stay": "Aucun séjour ouvert pour {country}.",
+    "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
+    "exit_before_entry": "❌ La sortie ne peut pas précéder l'entrée.",
+    "duration": "Durée du séjour :\n{days} jours",
+    "year_totals_header": "Totaux {year} :",
+    "calendar_year_line": "• Année civile : {days} jours",
+    "rolling_line": "• 365 jours glissants : {days} jours",
+    "remaining_line": "Restant avant le seuil de 183 jours :\n{days} jours"
+  },
+  "stay": {
+    "duplicate_exists": "⚠️ Ce séjour existe déjà :\n\n{stay_period}\n\nSi c'est incorrect, supprimez-le et saisissez les bonnes dates.",
+    "overlap_exists": "⚠️ Conflit avec un séjour existant :\n\n{stay_period}\n\nSi c'est incorrect, supprimez-le et saisissez les bonnes dates.",
+    "present": "En cours",
+    "remove_button": "Supprimer {country} {range}",
+    "removed": "🗑 Séjour supprimé.\n\nVous pouvez maintenant saisir les dates corrigées.",
+    "remove_not_found": "Séjour introuvable ou déjà supprimé.",
+    "remove_forbidden": "Vous ne pouvez pas supprimer ce séjour.",
+    "gap_warning": "⚠️ Période non suivie entre séjours :\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n({gap_days} jours)\n\nVous pouvez ajouter un autre pays."
+  }
+}

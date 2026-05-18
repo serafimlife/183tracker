@@ -1,0 +1,60 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "choose_date_format": "Choose your preferred date format:",
+    "date_format": {
+      "dmy": "1️⃣ DD.MM.YY",
+      "mdy": "2️⃣ MM.DD.YY"
+    },
+    "complete": "✅ Setup complete.\n\nHow to use the bot:\n\nEnter a country:\n`/in Indonesia today`\n\nLeave a country:\n`/out Indonesia 30.08.26`\n\nExamples:\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\nReports:\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\nThe bot automatically:\n• tracks calendar-year stays\n• tracks rolling 365-day stays\n• calculates remaining days before 183-day threshold\n• warns you before thresholds are reached\n\nYou can change language or date format anytime in /settings\n\nStart by entering the country you're currently in."
+  },
+  "start": {
+    "welcome_back": "Welcome back, {name}!\n\nYou're all set. Log a stay with `/in Country date` or open `/report` for a summary."
+  },
+  "in": {
+    "country_not_recognized": "❌ Country not recognized.\n\nPlease enter a valid country name.\n\nExample:\n`/in Thailand today`",
+    "success": "✅ Entered {flag} {country} on {date}.",
+    "invalid_usage": "Usage: `/in Country date`\n\nExample: `/in Thailand today`",
+    "invalid_date": "❌ Invalid date.\n\nExample: `/in Thailand today`",
+    "not_onboarded": "Please complete setup with /start first.",
+    "current_stay": "Current stay:\n{days} days",
+    "year_totals_header": "{year} totals:",
+    "calendar_year_line": "• Calendar year: {days} days",
+    "rolling_line": "• Rolling 365: {days} days",
+    "remaining_line": "Remaining before 183-day threshold:\n{days} days"
+  },
+  "out": {
+    "success": "{flag} Got it, you left {country} on {date}.",
+    "invalid_usage": "Usage: `/out Country date`\n\nExample: `/out Thailand today`",
+    "invalid_date": "❌ Invalid date.\n\nExample: `/out Thailand today`",
+    "not_onboarded": "Please complete setup with /start first.",
+    "no_open_stay": "No open stay found for {country}. Use `/in` first.",
+    "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
+    "exit_before_entry": "❌ Exit date cannot be before entry date.",
+    "duration": "Stay duration:\n{days} days",
+    "year_totals_header": "{year} totals:",
+    "calendar_year_line": "• Calendar year: {days} days",
+    "rolling_line": "• Rolling 365: {days} days",
+    "remaining_line": "Remaining before 183-day threshold:\n{days} days"
+  },
+  "transition": {
+    "prompt": "⚠️ You currently have an active stay in {prior_flag} {prior_country}.\n\n{active_stay}\n\nDid you leave {prior_country} on {entry_date} before entering {new_flag} {new_country}?",
+    "confirm_button": "Yes, close {country}",
+    "cancel_button": "Cancel",
+    "closed": "✅ Left {flag} {country} on {date}.",
+    "cancelled": "Transition cancelled. Your previous stay is unchanged.",
+    "expired": "This action is no longer valid. Please send /in again.",
+    "already_closed": "That stay is already closed. Please send /in again.",
+    "invalid_dates": "Invalid dates for this transition. Please send /in again."
+  },
+  "stay": {
+    "duplicate_exists": "⚠️ This stay already exists:\n\n{stay_period}\n\nIf this is incorrect, you can remove it and add corrected dates.",
+    "overlap_exists": "⚠️ This stay conflicts with an existing stay:\n\n{stay_period}\n\nIf this is incorrect, you can remove it and add corrected dates.",
+    "present": "Present",
+    "remove_button": "Remove {country} {range}",
+    "removed": "🗑 Stay removed.\n\nYou can now add corrected dates.",
+    "remove_not_found": "Stay not found or already removed.",
+    "remove_forbidden": "You cannot remove this stay.",
+    "gap_warning": "⚠️ There is an untracked period between your stays:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n({gap_days} days)\n\nYou may want to add another country for this period."
+  }
+}

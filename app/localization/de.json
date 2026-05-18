@@ -1,0 +1,50 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "choose_date_format": "Wählen Sie Ihr bevorzugtes Datumsformat:",
+    "date_format": {
+      "dmy": "1️⃣ TT.MM.JJ",
+      "mdy": "2️⃣ MM.TT.JJ"
+    },
+    "complete": "✅ Einrichtung abgeschlossen.\n\nSo nutzen Sie den Bot:\n\nLand betreten:\n`/in Indonesia today`\n\nLand verlassen:\n`/out Indonesia 30.08.26`\n\nBeispiele:\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\nBerichte:\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\nDer Bot:\n• erfasst Aufenthalte nach Kalenderjahr\n• erfasst Aufenthalte in rollierenden 365 Tagen\n• berechnet verbleibende Tage bis zur 183-Tage-Grenze\n• warnt vor Erreichen der Schwellen\n\nSprache und Datumsformat ändern Sie jederzeit unter /settings\n\nBeginnen Sie mit dem Land, in dem Sie sich gerade befinden."
+  },
+  "start": {
+    "welcome_back": "Willkommen zurück, {name}!\n\nAlles bereit. Aufenthalt mit `/in Land Datum` erfassen oder `/report` öffnen."
+  },
+  "in": {
+    "country_not_recognized": "❌ Land nicht erkannt.\n\nBitte einen gültigen Ländernamen eingeben.\n\nBeispiel:\n`/in Thailand today`",
+    "success": "✅ Einreise {flag} {country} am {date}.",
+    "invalid_usage": "Format: `/in Land Datum`\n\nBeispiel: `/in Thailand today`",
+    "invalid_date": "❌ Ungültiges Datum.\n\nBeispiel: `/in Thailand today`",
+    "not_onboarded": "Bitte zuerst /start abschließen.",
+    "current_stay": "Aktueller Aufenthalt:\n{days} Tage",
+    "year_totals_header": "Summe {year}:",
+    "calendar_year_line": "• Kalenderjahr: {days} Tage",
+    "rolling_line": "• Rollierende 365: {days} Tage",
+    "remaining_line": "Verbleibend bis 183-Tage-Grenze:\n{days} Tage"
+  },
+  "out": {
+    "success": "{flag} Ausreise aus {country} am {date}.",
+    "invalid_usage": "Format: `/out Land Datum`",
+    "invalid_date": "❌ Ungültiges Datum.",
+    "not_onboarded": "Bitte zuerst /start abschließen.",
+    "no_open_stay": "Kein offener Aufenthalt in {country}.",
+    "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
+    "exit_before_entry": "❌ Ausreise darf nicht vor Einreise liegen.",
+    "duration": "Aufenthaltsdauer:\n{days} Tage",
+    "year_totals_header": "Summe {year}:",
+    "calendar_year_line": "• Kalenderjahr: {days} Tage",
+    "rolling_line": "• Rollierende 365: {days} Tage",
+    "remaining_line": "Verbleibend bis 183-Tage-Grenze:\n{days} Tage"
+  },
+  "stay": {
+    "duplicate_exists": "⚠️ Dieser Aufenthalt existiert bereits:\n\n{stay_period}\n\nFalls falsch, entfernen und korrigierte Daten eingeben.",
+    "overlap_exists": "⚠️ Konflikt mit bestehendem Aufenthalt:\n\n{stay_period}\n\nFalls falsch, entfernen und korrigierte Daten eingeben.",
+    "present": "Aktuell",
+    "remove_button": "{country} {range} entfernen",
+    "removed": "🗑 Aufenthalt entfernt.\n\nSie können jetzt korrigierte Daten eingeben.",
+    "remove_not_found": "Aufenthalt nicht gefunden oder bereits entfernt.",
+    "remove_forbidden": "Dieser Aufenthalt kann nicht entfernt werden.",
+    "gap_warning": "⚠️ Ungetrackter Zeitraum zwischen Aufenthalten:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n({gap_days} Tage)\n\nErwägen Sie ein weiteres Land."
+  }
+}

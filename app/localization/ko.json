@@ -1,0 +1,50 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "choose_date_format": "원하는 날짜 형식을 선택하세요:",
+    "date_format": {
+      "dmy": "1️⃣ DD.MM.YY",
+      "mdy": "2️⃣ MM.DD.YY"
+    },
+    "complete": "✅ 설정이 완료되었습니다.\n\n사용 방법:\n\n입국:\n`/in Indonesia today`\n\n출국:\n`/out Indonesia 30.08.26`\n\n예시:\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\n보고서:\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\n봇이 자동으로:\n• 연도별 체류 기록\n• 최근 365일 롤링 체류 기록\n• 183일 임계값까지 남은 일수 계산\n• 임계값 도달 전 경고\n\n언어와 날짜 형식은 /settings에서 언제든 변경할 수 있습니다\n\n현재 있는 국가를 입력하여 시작하세요."
+  },
+  "start": {
+    "welcome_back": "다시 오신 것을 환영합니다, {name}님!\n\n설정이 완료되었습니다. `/in 국가 날짜`로 체류를 기록하거나 `/report`를 여세요."
+  },
+  "in": {
+    "country_not_recognized": "❌ 국가를 인식할 수 없습니다.\n\n올바른 국가 이름을 입력하세요.\n\n예:\n`/in Thailand today`",
+    "success": "✅ {flag} {country} 입국 — {date}",
+    "invalid_usage": "형식: `/in 국가 날짜`\n\n예: `/in Thailand today`",
+    "invalid_date": "❌ 날짜가 올바르지 않습니다.\n\n예: `/in Thailand today`",
+    "not_onboarded": "먼저 /start로 설정을 완료하세요.",
+    "current_stay": "현재 체류:\n{days}일",
+    "year_totals_header": "{year}년 합계:",
+    "calendar_year_line": "• 연도별: {days}일",
+    "rolling_line": "• 365일 롤링: {days}일",
+    "remaining_line": "183일 임계값까지:\n{days}일"
+  },
+  "out": {
+    "success": "{flag} {country} 출국 — {date}",
+    "invalid_usage": "형식: `/out 국가 날짜`",
+    "invalid_date": "❌ 날짜가 올바르지 않습니다.",
+    "not_onboarded": "먼저 /start로 설정을 완료하세요.",
+    "no_open_stay": "{country}에 열린 체류가 없습니다.",
+    "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
+    "exit_before_entry": "❌ 출국일은 입국일보다 이를 수 없습니다.",
+    "duration": "체류 기간:\n{days}일",
+    "year_totals_header": "{year}년 합계:",
+    "calendar_year_line": "• 연도별: {days}일",
+    "rolling_line": "• 365일 롤링: {days}일",
+    "remaining_line": "183일 임계값까지:\n{days}일"
+  },
+  "stay": {
+    "duplicate_exists": "⚠️ 이 체류가 이미 있습니다:\n\n{stay_period}\n\n잘못된 경우 삭제 후 올바른 날짜를 입력하세요.",
+    "overlap_exists": "⚠️ 기존 체류와 충돌합니다:\n\n{stay_period}\n\n잘못된 경우 삭제 후 올바른 날짜를 입력하세요.",
+    "present": "현재",
+    "remove_button": "{country} {range} 삭제",
+    "removed": "🗑 체류가 삭제되었습니다.\n\n이제 올바른 날짜를 입력할 수 있습니다.",
+    "remove_not_found": "체류를 찾을 수 없거나 이미 삭제되었습니다.",
+    "remove_forbidden": "이 체류는 삭제할 수 없습니다.",
+    "gap_warning": "⚠️ 체류 사이에 기록되지 않은 기간이 있습니다:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n({gap_days}일)\n\n다른 국가를 추가해 보세요."
+  }
+}

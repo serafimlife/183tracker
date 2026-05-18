@@ -1,0 +1,50 @@
+{
+  "onboarding": {
+    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "choose_date_format": "希望の日付形式を選択してください：",
+    "date_format": {
+      "dmy": "1️⃣ DD.MM.YY",
+      "mdy": "2️⃣ MM.DD.YY"
+    },
+    "complete": "✅ 設定が完了しました。\n\n使い方：\n\n入国：\n`/in Indonesia today`\n\n出国：\n`/out Indonesia 30.08.26`\n\n例：\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\nレポート：\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\nボットは自動的に：\n• 暦年の滞在を記録\n• 過去365日間の滞在を記録\n• 183日の閾値までの残日数を計算\n• 閾値に達する前に警告\n\n言語と日付形式は /settings でいつでも変更できます\n\n現在いる国を入力して始めてください。"
+  },
+  "start": {
+    "welcome_back": "おかえりなさい、{name}さん！\n\n設定済みです。`/in 国名 日付` で滞在を記録するか、`/report` を開いてください。"
+  },
+  "in": {
+    "country_not_recognized": "❌ 国名を認識できません。\n\n有効な国名を入力してください。\n\n例:\n`/in Thailand today`",
+    "success": "✅ {flag} {country} に {date} で入国を記録しました。",
+    "invalid_usage": "形式: `/in 国名 日付`\n\n例: `/in Thailand today`",
+    "invalid_date": "❌ 日付が無効です。\n\n例: `/in Thailand today`",
+    "not_onboarded": "まず /start で設定を完了してください。",
+    "current_stay": "現在の滞在:\n{days}日",
+    "year_totals_header": "{year}年の合計:",
+    "calendar_year_line": "• 暦年: {days}日",
+    "rolling_line": "• 365日ローリング: {days}日",
+    "remaining_line": "183日の閾値まで:\n{days}日"
+  },
+  "out": {
+    "success": "{flag} {country} を {date} に出国しました。",
+    "invalid_usage": "形式: `/out 国名 日付`",
+    "invalid_date": "❌ 日付が無効です。",
+    "not_onboarded": "まず /start で設定を完了してください。",
+    "no_open_stay": "{country} の未完了の滞在がありません。",
+    "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
+    "exit_before_entry": "❌ 出国日は入国日より前にできません。",
+    "duration": "滞在日数:\n{days}日",
+    "year_totals_header": "{year}年の合計:",
+    "calendar_year_line": "• 暦年: {days}日",
+    "rolling_line": "• 365日ローリング: {days}日",
+    "remaining_line": "183日の閾値まで:\n{days}日"
+  },
+  "stay": {
+    "duplicate_exists": "⚠️ この滞在は既に存在します:\n\n{stay_period}\n\n誤りの場合は削除して正しい日付を入力してください。",
+    "overlap_exists": "⚠️ 既存の滞在と競合します:\n\n{stay_period}\n\n誤りの場合は削除して正しい日付を入力してください。",
+    "present": "現在",
+    "remove_button": "{country} {range} を削除",
+    "removed": "🗑 滞在を削除しました。\n\n正しい日付を入力できます。",
+    "remove_not_found": "滞在が見つからないか、既に削除されています。",
+    "remove_forbidden": "この滞在は削除できません。",
+    "gap_warning": "⚠️ 滞在の間に未記録の期間があります:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n({gap_days}日)\n\n別の国を追加することを検討してください。"
+  }
+}
