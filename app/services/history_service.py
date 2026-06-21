@@ -202,13 +202,28 @@ class HistoryService:
             )
             for idx, stay in enumerate(page_stays, 1)
         ]
+        _max_per_row = 8
+        button_rows: list[list[InlineKeyboardButton]] = [
+            number_buttons[i : i + _max_per_row]
+            for i in range(0, len(number_buttons), _max_per_row)
+        ]
+        current_year = date.today().year
+        year_buttons = [
+            InlineKeyboardButton(
+                text=str(y),
+                callback_data=ManageHistoryCallback(page=0, filter_key=f"y{y}").pack(),
+            )
+            for y in (current_year, current_year - 1, current_year - 2)
+        ]
         back_button = InlineKeyboardButton(
             text=i18n.t("manage.back_button"),
             callback_data=HistoryPageCallback(
                 page=safe_page, filter_key=filter_key
             ).pack(),
         )
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[number_buttons, [back_button]])
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[*button_rows, year_buttons, [back_button]]
+        )
         return MessageResult(message="\n".join(parts), keyboard=keyboard)
 
     async def get_stay_action_menu(

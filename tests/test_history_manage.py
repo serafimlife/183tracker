@@ -126,7 +126,7 @@ async def test_manage_selection_shows_numbered_buttons(service: HistoryService) 
 
     assert "Select stay to manage:" in result.message
     assert result.keyboard is not None
-    # First row: numbered buttons (2 stays)
+    # First row: numbered buttons (2 stays, both fit in one row)
     number_row = result.keyboard.inline_keyboard[0]
     assert [b.text for b in number_row] == ["1", "2"]
     # Callback data must carry actual stay IDs, not visible numbers
@@ -135,6 +135,51 @@ async def test_manage_selection_shows_numbered_buttons(service: HistoryService) 
     assert any("11" in d for d in cb_data)
     # No raw ID visible in button text
     assert all(b.text.isdigit() for b in number_row)
+
+
+@pytest.mark.asyncio
+async def test_manage_selection_year_buttons_present(service: HistoryService) -> None:
+    user = _user()
+    service._repo.list_by_user.return_value = [
+        _stay(5, entry="2026-01-01", exit="2026-01-10")
+    ]
+
+    result = await service.get_manage_selection(user, filter_key="y2026", page=0)
+
+    assert result.keyboard is not None
+    all_buttons = [b for row in result.keyboard.inline_keyboard for b in row]
+    texts = [b.text for b in all_buttons]
+    # Year navigation buttons must be present
+    assert "2026" in texts
+    assert "2025" in texts
+    assert "2024" in texts
+    # Year buttons use ManageHistoryCallback so user stays in manage mode
+    year_btn = next(b for b in all_buttons if b.text == "2025")
+    assert "hist_mgmt:" in (year_btn.callback_data or "")
+
+
+@pytest.mark.asyncio
+async def test_manage_selection_many_stays_split_into_rows(
+    service: HistoryService,
+) -> None:
+    user = _user()
+    # 10 stays — exceeds the 8-button-per-row limit
+    service._repo.list_by_user.return_value = [
+        _stay(i, entry=f"2026-{i:02d}-01") for i in range(1, 11)
+    ]
+
+    result = await service.get_manage_selection(user, filter_key="y2026", page=0)
+
+    assert result.keyboard is not None
+    rows = result.keyboard.inline_keyboard
+    # Find stay-number rows (rows where all buttons use the mgmt_sel callback prefix)
+    number_rows = [
+        r for r in rows
+        if all((b.callback_data or "").startswith("mgmt_sel:") for b in r)
+    ]
+    assert len(number_rows) == 2
+    assert len(number_rows[0]) == 8
+    assert len(number_rows[1]) == 2
 
 
 @pytest.mark.asyncio

@@ -157,7 +157,9 @@ class TestSchengenStatus:
 
     def test_empty_stays(self) -> None:
         result = schengen_status([], TODAY)
-        assert result == SchengenResult(days_used=0, days_remaining=90, next_free_date=None)
+        assert result == SchengenResult(
+            days_used=0, days_remaining=90, next_free_date=None
+        )
 
     def test_active_stay_at_exact_90_day_cap(self) -> None:
         # Active stay that has been going for exactly 90 days
@@ -183,7 +185,9 @@ class TestSchengenStatus:
         de_start = fr_end + timedelta(days=1)
         de_end = de_start + timedelta(days=39)  # 40 inclusive Germany days
         stays = [
-            _stay(WINDOW_START.isoformat(), fr_end.isoformat(), code="FR", name="France"),
+            _stay(
+                WINDOW_START.isoformat(), fr_end.isoformat(), code="FR", name="France"
+            ),
             _stay(de_start.isoformat(), de_end.isoformat(), code="DE", name="Germany"),
         ]
         result = schengen_status(stays, TODAY)
@@ -225,7 +229,9 @@ class TestNextFreeDate:
         # An open stay (no exit) must give the same result as a closed stay ending at as_of.
         # This verifies future days are not projected forward in the sliding-window calc.
         open_stays = [_stay(WINDOW_START.isoformat(), code="FR", name="France")]
-        closed_stays = [_stay(WINDOW_START.isoformat(), TODAY.isoformat(), code="FR", name="France")]
+        closed_stays = [
+            _stay(WINDOW_START.isoformat(), TODAY.isoformat(), code="FR", name="France")
+        ]
         open_free = _next_free_date(open_stays, TODAY)
         closed_free = _next_free_date(closed_stays, TODAY)
         assert open_free == closed_free

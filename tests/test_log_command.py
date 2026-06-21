@@ -126,10 +126,14 @@ async def test_fsm_success(monkeypatch: pytest.MonkeyPatch) -> None:
     await log_command.cmd_log(_message("/log"), state, session=AsyncMock())
     assert state.current == LogCommandStates.awaiting_country
 
-    await log_command.log_waiting_country(_message("Thailand"), state)
+    await log_command.log_waiting_country(
+        _message("Thailand"), state, session=AsyncMock()
+    )
     assert state.current == LogCommandStates.awaiting_entry_date
 
-    await log_command.log_waiting_entry_date(_message("01.01.26"), state)
+    await log_command.log_waiting_entry_date(
+        _message("01.01.26"), state, session=AsyncMock()
+    )
     assert state.current == LogCommandStates.awaiting_exit_date
 
     message = _message("15.01.26")
@@ -137,6 +141,99 @@ async def test_fsm_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert state.current is None
     message.answer.assert_awaited_once_with("logged")
+
+
+@pytest.mark.asyncio
+async def test_fsm_invalid_entry_date_rerequests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Invalid entry date is caught immediately — state stays at awaiting_entry_date."""
+
+    async def fake_get_or_create(*args, **kwargs):
+        return _user(), False
+
+    monkeypatch.setattr(log_command.UserService, "get_or_create", fake_get_or_create)
+
+    state = FakeState()
+    await log_command.cmd_log(_message("/log"), state, session=AsyncMock())
+    await log_command.log_waiting_country(
+        _message("Thailand"), state, session=AsyncMock()
+    )
+    assert state.current == LogCommandStates.awaiting_entry_date
+
+    bad_date = _message("not-a-date")
+    await log_command.log_waiting_entry_date(bad_date, state, session=AsyncMock())
+
+    assert state.current == LogCommandStates.awaiting_entry_date
+    bad_date.answer.assert_awaited_once()
+    assert "Invalid" in bad_date.answer.call_args[0][0]
+
+
+@pytest.mark.asyncio
+async def test_fsm_command_escape_clears_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Typing a slash command while in log FSM clears state instead of looping."""
+
+    async def fake_get_or_create(*args, **kwargs):
+        return _user(), False
+
+    dispatched: list[str] = []
+
+    async def fake_cmd_history(message, session):
+        dispatched.append("history")
+
+    monkeypatch.setattr(log_command.UserService, "get_or_create", fake_get_or_create)
+
+    import app.handlers.history_command as hc_module
+
+    monkeypatch.setattr(hc_module, "cmd_history", fake_cmd_history)
+
+    state = FakeState()
+    await log_command.cmd_log(_message("/log"), state, session=AsyncMock())
+    await log_command.log_waiting_country(
+        _message("Thailand"), state, session=AsyncMock()
+    )
+
+    # User types /history while waiting for entry date
+    escape_msg = _message("/history")
+    await log_command.log_waiting_entry_date(escape_msg, state, session=AsyncMock())
+
+    assert state.current is None
+    assert dispatched == ["history"]
+
+
+@pytest.mark.asyncio
+async def test_fsm_error_clears_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    """StayCommandError on exit-date step clears FSM state so user isn't stuck."""
+
+    async def fake_get_or_create(*args, **kwargs):
+        return _user(), False
+
+    async def fake_handle_log_command(self, user, command_text: str):
+        return StayCommandError(message="❌ Conflict")
+
+    monkeypatch.setattr(log_command.UserService, "get_or_create", fake_get_or_create)
+    monkeypatch.setattr(
+        log_command.StayService,
+        "handle_log_command",
+        fake_handle_log_command,
+    )
+
+    state = FakeState()
+    await log_command.cmd_log(_message("/log"), state, session=AsyncMock())
+    await log_command.log_waiting_country(
+        _message("Thailand"), state, session=AsyncMock()
+    )
+    await log_command.log_waiting_entry_date(
+        _message("01.01.26"), state, session=AsyncMock()
+    )
+
+    message = _message("15.01.26")
+    await log_command.log_waiting_exit_date(message, state, session=AsyncMock())
+
+    assert state.current is None
+    message.answer.assert_awaited_once_with("❌ Conflict")
 
 
 @pytest.mark.asyncio

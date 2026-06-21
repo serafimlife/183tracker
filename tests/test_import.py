@@ -63,7 +63,9 @@ class FakeState:
 
 def _document_message(filename: str, file_id: str = "file-id", file_size: int = 1000):
     return SimpleNamespace(
-        document=SimpleNamespace(file_name=filename, file_id=file_id, file_size=file_size),
+        document=SimpleNamespace(
+            file_name=filename, file_id=file_id, file_size=file_size
+        ),
         from_user=SimpleNamespace(id=100),
         bot=SimpleNamespace(),
         answer=AsyncMock(),
