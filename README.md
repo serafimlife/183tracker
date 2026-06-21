@@ -236,6 +236,8 @@ docker compose build --pull          # rebuild the bot image with updated code
 docker compose up -d                 # recreate changed containers; schema init runs automatically
 ```
 
+> **Warning:** Never run `docker compose down -v` in production — the `-v` flag deletes all named volumes, including `postgres_data`, which contains your entire database. Use `docker compose down` (no flags) to stop containers while keeping data safe.
+
 #### Manual (systemd)
 
 ```bash
@@ -245,6 +247,47 @@ sudo systemctl restart 183days-bot
 ```
 
 If a new version adds database columns, re-run the schema initialisation command from step 6 (it only creates missing tables and does not delete data). Once Alembic migrations are in place, updates will use `alembic upgrade head` instead.
+
+---
+
+## Protecting your data
+
+All user travel data lives in the `postgres_data` Docker named volume (or on the host filesystem if you are using a self-managed PostgreSQL install). A few commands can permanently delete it — know the difference before you run them.
+
+### Safe Docker commands
+
+| Command | Effect on data |
+|---|---|
+| `docker compose down` | Stops and removes containers. **Volume is kept.** |
+| `docker compose stop` | Stops containers without removing them. **Volume is kept.** |
+| `docker compose restart` | Restarts containers. **Volume is kept.** |
+| `docker compose up -d` | Starts/recreates containers. **Volume is kept.** |
+
+### Dangerous commands — will delete all data
+
+| Command | Effect on data |
+|---|---|
+| `docker compose down -v` | Removes containers **and all named volumes** — database is gone. |
+| `docker volume rm postgres_data` | Deletes the volume directly — database is gone. |
+| `docker volume prune` | Removes all unused volumes — may delete the database if the container is stopped. |
+
+Never run any of the dangerous commands on a production deployment unless you intend to wipe the database and start fresh.
+
+### Backups
+
+Take a backup before updates or any Docker maintenance:
+
+```bash
+docker exec 183days_bot_db pg_dump -U postgres 183days_bot > backup_$(date +%Y%m%d).sql
+```
+
+Restore from a backup:
+
+```bash
+cat backup_20240101.sql | docker exec -i 183days_bot_db psql -U postgres -d 183days_bot
+```
+
+Store backups outside the server (e.g. copy them to your local machine with `scp`) so they survive a VPS failure.
 
 ---
 
