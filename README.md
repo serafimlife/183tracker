@@ -52,8 +52,8 @@ Two deployment paths are available. **Full Docker** (steps 5 → 7 below) runs b
 SSH into your server and clone the repository:
 
 ```bash
-git clone https://github.com/serafimlife/183tracker
-cd 183tracker
+git clone <your-repo-url>
+cd 183days_rule_bot
 ```
 
 ### 3. Install uv and Python 3.12 *(manual deployment only)*
@@ -136,9 +136,9 @@ You should see `183days_bot_db` with status `healthy`.
 
 ### 6. Initialise the database schema *(manual deployment only)*
 
-Skip this step if you started the full Docker stack in step 5 — the bot container runs schema initialisation automatically on startup.
+Skip this step if you started the full Docker stack in step 5 — the Docker entrypoint (`docker/entrypoint.sh`) runs schema initialisation automatically before the bot process starts. If you run the bot directly with `uv run bot` or via systemd **without** Docker, you must run this step manually or you will get `UndefinedTableError: relation "users" does not exist` on startup.
 
-For manual deployments, run this once after the database is healthy:
+Run this once after the database is healthy:
 
 ```bash
 uv run python -c "
