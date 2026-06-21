@@ -51,12 +51,15 @@ class ReportService:
 
         keyboard = self._report_keyboard(i18n, filter)
         window = _report_window(filter)
+        has_explicit_dates = filter.start_date is not None and filter.end_date is not None
         stays = await self._repo.list_by_user(user.telegram_id)
 
+        as_of = date.today()
         totals: dict[str, int] = {}
         names: dict[str, str] = {}
         all_records: list[StayRecord] = []
         records_by_code: dict[str, list[StayRecord]] = {}
+        min_entry_by_code: dict[str, date] = {}
 
         for stay in stays:
             record = StayRecord(
@@ -82,14 +85,27 @@ class ReportService:
             # not just those in the selected window.
             records_by_code.setdefault(code, []).append(record)
 
+            # Track earliest entry for all-time period header
+            if code not in min_entry_by_code or stay.entry_date < min_entry_by_code[code]:
+                min_entry_by_code[code] = stay.entry_date
+
         if not totals:
             return MessageResult(message=i18n.t("report.empty"), keyboard=keyboard)
 
         sorted_codes = sorted(totals, key=totals.get, reverse=True)
-        as_of = date.today()
+
+        # For all-time country view (no year, no explicit dates), show period bounds in header
+        period_start: date | None = None
+        period_end: date | None = None
+        if window is None and not has_explicit_dates and sorted_codes:
+            period_start = min(
+                min_entry_by_code.get(c, as_of) for c in sorted_codes
+            )
+            period_end = as_of
 
         header = _report_header(
-            i18n, filter, country_name, date_format=user.date_format
+            i18n, filter, country_name, date_format=user.date_format,
+            period_start=period_start, period_end=period_end,
         )
         lines: list[str] = []
         for code in sorted_codes:
@@ -97,7 +113,6 @@ class ReportService:
             rolling = calculate_rolling_365_days(
                 records_by_code[code], as_of, country_code=code
             )
-            cal_remaining = calculate_remaining_days(period)
             roll_remaining = calculate_remaining_days(rolling)
 
             lines.append(
@@ -112,13 +127,16 @@ class ReportService:
                 i18n.t("report.rolling_days", days=format_duration_days(rolling, i18n))
             )
             lines.append("")
-            lines.append(
-                i18n.t(
-                    "report.threshold_calendar",
-                    indicator=get_threshold_indicator(cal_remaining),
-                    days=format_duration_days(cal_remaining, i18n),
+            # Calendar threshold only makes sense for a year-scoped view
+            if not has_explicit_dates and window is not None:
+                cal_remaining = calculate_remaining_days(period)
+                lines.append(
+                    i18n.t(
+                        "report.threshold_calendar",
+                        indicator=get_threshold_indicator(cal_remaining),
+                        days=format_duration_days(cal_remaining, i18n),
+                    )
                 )
-            )
             lines.append(
                 i18n.t(
                     "report.threshold_rolling",
@@ -269,6 +287,8 @@ def _report_header(
     country_name: str | None,
     *,
     date_format: str | None,
+    period_start: date | None = None,
+    period_end: date | None = None,
 ) -> str:
     """Build the report header with optional filter labels."""
     if filter.start_date is not None and filter.end_date is not None:
@@ -286,6 +306,12 @@ def _report_header(
         return i18n.t(
             "report.title_country_year", country=country_name, year=filter.year
         )
+    if country_name is not None and period_start is not None and period_end is not None:
+        range_label = (
+            f"{_format_report_date(period_start, date_format)}"
+            f"–{_format_report_date(period_end, date_format)}"
+        )
+        return i18n.t("report.title_country", country=country_name) + f" — {range_label}"
     if country_name is not None:
         return i18n.t("report.title_country", country=country_name)
     if filter.year is not None:

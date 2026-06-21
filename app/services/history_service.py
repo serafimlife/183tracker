@@ -207,6 +207,25 @@ class HistoryService:
             number_buttons[i : i + _max_per_row]
             for i in range(0, len(number_buttons), _max_per_row)
         ]
+        page_row: list[InlineKeyboardButton] = []
+        if safe_page > 0:
+            page_row.append(
+                InlineKeyboardButton(
+                    text=i18n.t("history.newer_button"),
+                    callback_data=ManageHistoryCallback(
+                        page=safe_page - 1, filter_key=filter_key
+                    ).pack(),
+                )
+            )
+        if (safe_page + 1) * HISTORY_PAGE_SIZE < total:
+            page_row.append(
+                InlineKeyboardButton(
+                    text=i18n.t("history.older_button"),
+                    callback_data=ManageHistoryCallback(
+                        page=safe_page + 1, filter_key=filter_key
+                    ).pack(),
+                )
+            )
         current_year = date.today().year
         year_buttons = [
             InlineKeyboardButton(
@@ -221,9 +240,13 @@ class HistoryService:
                 page=safe_page, filter_key=filter_key
             ).pack(),
         )
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[*button_rows, year_buttons, [back_button]]
-        )
+        keyboard_rows: list[list[InlineKeyboardButton]] = []
+        if page_row:
+            keyboard_rows.append(page_row)
+        keyboard_rows.extend(button_rows)
+        keyboard_rows.append(year_buttons)
+        keyboard_rows.append([back_button])
+        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
         return MessageResult(message="\n".join(parts), keyboard=keyboard)
 
     async def get_stay_action_menu(
@@ -632,20 +655,10 @@ def _merge_custom_date_range(
     if range_query.start_date is None or range_query.end_date is None:
         return base_query
 
-    start = range_query.start_date
-    end = range_query.end_date
-    if base_query.year is not None:
-        year_start = date(base_query.year, 1, 1)
-        year_end = date(base_query.year, 12, 31)
-        start = max(start, year_start)
-        end = min(end, year_end)
-        if end < start:
-            return None
-
     return ParsedHistoryCommand(
         country_input=base_query.country_input,
-        start_date=start,
-        end_date=end,
+        start_date=range_query.start_date,
+        end_date=range_query.end_date,
     )
 
 

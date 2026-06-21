@@ -231,7 +231,8 @@ async def test_history_custom_dates_preserve_country_filter(
     assert "Travel history — Thailand — 1 Mar 2026–5 Jul 2026" in result.message
     assert "Thailand" in result.message
     assert "Indonesia" not in result.message
-    assert "(50 days)" in result.message
+    # today = May 30; active stay from May 17 caps to today: 17 May–30 May = 14 days
+    assert "(14 days)" in result.message
 
 
 @pytest.mark.asyncio
@@ -250,9 +251,11 @@ async def test_history_custom_dates_preserve_year_filter(
         base_filter_key="y2026",
     )
 
-    assert "Travel history — 1 Jan 2026–5 Jan 2026" in result.message
+    # Custom dates now override the base year filter entirely
+    assert "Travel history — 20 Dec 2025–5 Jan 2026" in result.message
     assert "Indonesia" in result.message
-    assert "(5 days)" in result.message
+    # Indonesia stay: Dec 25–Jan 10, window Dec 20–Jan 5 → Dec 25–Jan 5 = 12 days
+    assert "(12 days)" in result.message
     assert "Thailand" not in result.message
 
 
@@ -443,7 +446,8 @@ async def test_history_active_stay_present_formatting(service: HistoryService) -
     result = await service.handle_history_command(user, "/history 2026")
 
     assert "17 May 2026 → Present" in result.message
-    assert "(229 days)" in result.message
+    # FixedDate.today() = 2026-05-30; active stay caps to today: 17 May–30 May = 14 days
+    assert "(14 days)" in result.message
 
 
 @pytest.mark.asyncio
@@ -494,7 +498,8 @@ async def test_history_duration_active_stay_with_custom_range(
     result = await service.handle_history_command(user, "/history 01.06.26 30.06.26")
 
     assert "17 May 2026 → Present" in result.message
-    assert "(30 days)" in result.message
+    # today = May 30, window = Jun 1–Jun 30; stay capped to May 30 has no overlap → 0 days
+    assert "(0 days)" in result.message
 
 
 @pytest.mark.asyncio

@@ -314,10 +314,22 @@ class TestReportThresholds:
             _stay(1, entry="2026-01-01", exit="2026-01-10"),
         ]
 
+        # TimelineFilter() has no year → all-time view → no calendar threshold
         result = await service.handle_report_command(user, TimelineFilter())
 
         assert "Days in selected period: 10 days" in result.message
         assert "Rolling 365:" in result.message
+        assert "Remaining before 183-day calendar threshold:" not in result.message
+        assert "Remaining before 183-day rolling threshold:" in result.message
+
+    async def test_calendar_threshold_shown_for_year_filter(self, service) -> None:
+        user = _user()
+        service._repo.list_by_user.return_value = [
+            _stay(1, entry="2026-01-01", exit="2026-01-10"),
+        ]
+
+        result = await service.handle_report_command(user, TimelineFilter(year=2026))
+
         assert "Remaining before 183-day calendar threshold:" in result.message
         assert "Remaining before 183-day rolling threshold:" in result.message
 
@@ -370,8 +382,10 @@ class TestReportThresholds:
         id_pos = result.message.index("🇮🇩")
         assert th_pos < id_pos
 
-        # Each country block has threshold info
-        assert result.message.count("Remaining before 183-day calendar threshold:") == 2
+        # No year filter → no calendar threshold shown
+        assert result.message.count("Remaining before 183-day calendar threshold:") == 0
+        # Rolling threshold shown for each country
+        assert result.message.count("Remaining before 183-day rolling threshold:") == 2
 
     async def test_threshold_with_year_filter(self, service) -> None:
         user = _user()
@@ -402,8 +416,9 @@ class TestReportThresholds:
 
         assert "Indonesia" in result.message
         assert "Thailand" not in result.message
-        # Only one country block
-        assert result.message.count("Remaining before 183-day calendar threshold:") == 1
+        # Country-only filter (no year) → no calendar threshold shown
+        assert result.message.count("Remaining before 183-day calendar threshold:") == 0
+        assert "Remaining before 183-day rolling threshold:" in result.message
 
     async def test_empty_report_still_works(self, service) -> None:
         user = _user()
