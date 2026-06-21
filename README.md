@@ -52,7 +52,7 @@ Two deployment paths are available. **Full Docker** (steps 5 → 7 below) runs b
 SSH into your server and clone the repository:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/serafimlife/183tracker
 cd 183days_rule_bot
 ```
 
