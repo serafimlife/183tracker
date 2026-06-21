@@ -7,10 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.logger import get_logger
 from app.bot.states.onboarding import OnboardingStates
-from app.bot.callbacks.onboarding import (
-    OnboardingDateFormatCallback,
-    OnboardingLanguageCallback,
-)
+from app.bot.callbacks.onboarding import OnboardingDateFormatCallback
 from app.services.onboarding_service import OnboardingService
 from app.services.user_service import UserService
 
@@ -36,41 +33,6 @@ async def _apply_step(
         await state.set_state(step.fsm_state)
 
     await callback.answer()
-
-
-@router.callback_query(
-    OnboardingLanguageCallback.filter(),
-    OnboardingStates.language,
-)
-async def on_language_selected(
-    callback: CallbackQuery,
-    callback_data: OnboardingLanguageCallback,
-    state: FSMContext,
-    session: AsyncSession,
-) -> None:
-    if callback.from_user is None:
-        return
-
-    user_service = UserService(session)
-    user, _ = await user_service.get_or_create(
-        callback.from_user.id,
-        username=callback.from_user.username,
-        first_name=callback.from_user.first_name,
-    )
-
-    onboarding = OnboardingService(session)
-    try:
-        step = await onboarding.select_language(user, callback_data.code)
-    except ValueError:
-        logger.warning(
-            "onboarding_invalid_language telegram_id=%s code=%s",
-            callback.from_user.id,
-            callback_data.code,
-        )
-        await callback.answer("Invalid language.", show_alert=True)
-        return
-
-    await _apply_step(callback, state, step)
 
 
 @router.callback_query(

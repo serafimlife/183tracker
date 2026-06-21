@@ -38,4 +38,9 @@ def test_multiple_stays_same_country() -> None:
         _stay("2026-01-01", "2026-01-15"),
         _stay("2026-02-01", "2026-02-10"),
     ]
-    assert calculate_calendar_year_days(stays, 2026, country_code="ID", as_of=date(2026, 12, 31)) == 25
+    assert (
+        calculate_calendar_year_days(
+            stays, 2026, country_code="ID", as_of=date(2026, 12, 31)
+        )
+        == 25
+    )

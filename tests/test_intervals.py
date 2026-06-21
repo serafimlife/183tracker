@@ -20,11 +20,18 @@ def test_inclusive_days_two_days() -> None:
 
 
 def test_intersect_ranges_disjoint() -> None:
-    assert intersect_ranges((date(2026, 1, 1), date(2026, 1, 10)), (date(2026, 2, 1), date(2026, 2, 10))) is None
+    assert (
+        intersect_ranges(
+            (date(2026, 1, 1), date(2026, 1, 10)), (date(2026, 2, 1), date(2026, 2, 10))
+        )
+        is None
+    )
 
 
 def test_intersect_ranges_overlap() -> None:
-    assert intersect_ranges((date(2026, 1, 5), date(2026, 1, 20)), (date(2026, 1, 15), date(2026, 1, 31))) == (
+    assert intersect_ranges(
+        (date(2026, 1, 5), date(2026, 1, 20)), (date(2026, 1, 15), date(2026, 1, 31))
+    ) == (
         date(2026, 1, 15),
         date(2026, 1, 20),
     )

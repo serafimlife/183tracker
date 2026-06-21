@@ -38,7 +38,7 @@ async def cmd_start(
     elif user.language is not None:
         step = onboarding.resume_onboarding(user)
     else:
-        step = onboarding.start_onboarding(user)
+        step = await onboarding.start_onboarding(user)
 
     if step.fsm_state is not None:
         await state.set_state(step.fsm_state)

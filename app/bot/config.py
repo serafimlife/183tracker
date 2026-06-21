@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     bot_token: str = Field(..., alias="BOT_TOKEN")
     database_url: str = Field(..., alias="DATABASE_URL")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    # When set, FSM state is stored in Redis (required for multi-instance deployments).
+    # Example: redis://localhost:6379/0
+    redis_url: str | None = Field(default=None, alias="REDIS_URL")
 
 
 @lru_cache

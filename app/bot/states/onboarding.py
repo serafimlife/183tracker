@@ -7,7 +7,6 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class OnboardingStates(StatesGroup):
-    """Language selection → date format → done."""
+    """Date format selection → done."""
 
-    language = State()
     date_format = State()

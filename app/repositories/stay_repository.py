@@ -64,6 +64,29 @@ class StayRepository:
         result = await self._session.execute(select(Stay).where(Stay.id == stay_id))
         return result.scalar_one_or_none()
 
+    async def update_stay(
+        self,
+        stay: Stay,
+        *,
+        country_code: str | None = None,
+        country_name: str | None = None,
+        entry_date: date | None = None,
+        new_exit_date: date | None = None,
+        clear_exit: bool = False,
+    ) -> Stay:
+        if country_code is not None:
+            stay.country_code = country_code
+        if country_name is not None:
+            stay.country_name = country_name
+        if entry_date is not None:
+            stay.entry_date = entry_date
+        if clear_exit:
+            stay.exit_date = None
+        elif new_exit_date is not None:
+            stay.exit_date = new_exit_date
+        await self._session.flush()
+        return stay
+
     async def delete(self, stay: Stay) -> None:
         await self._session.delete(stay)
         await self._session.flush()

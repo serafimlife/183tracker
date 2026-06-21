@@ -1,6 +1,3 @@
-from app.bot.callbacks.onboarding import (
-    OnboardingDateFormatCallback,
-    OnboardingLanguageCallback,
-)
+from app.bot.callbacks.onboarding import OnboardingDateFormatCallback
 
-__all__ = ["OnboardingDateFormatCallback", "OnboardingLanguageCallback"]
+__all__ = ["OnboardingDateFormatCallback"]

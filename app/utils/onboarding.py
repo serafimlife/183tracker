@@ -3,6 +3,8 @@
 from enum import StrEnum
 from typing import Final
 
+DEFAULT_LANGUAGE: Final[str] = "en"
+
 SUPPORTED_LANGUAGES: Final[tuple[str, ...]] = (
     "en",
     "es",

@@ -17,7 +17,7 @@
     "invalid_usage": "格式：`/in 国家 日期`\n\n示例：`/in Thailand today`",
     "invalid_date": "❌ 日期无效。\n\n示例：`/in Thailand today`",
     "not_onboarded": "请先使用 /start 完成设置。",
-    "current_stay": "当前停留:\n{days} 天",
+    "current_stay": "当前停留:\n{duration}",
     "year_totals_header": "{year} 年合计:",
     "calendar_year_line": "• 日历年: {days} 天",
     "rolling_line": "• 滚动365天: {days} 天",
@@ -31,11 +31,58 @@
     "no_open_stay": "未找到 {country} 的开放停留。",
     "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
     "exit_before_entry": "❌ 离开日期不能早于入境日期。",
-    "duration": "停留时长:\n{days} 天",
+    "duration": "停留时长:\n{duration}",
     "year_totals_header": "{year} 年合计:",
     "calendar_year_line": "• 日历年: {days} 天",
     "rolling_line": "• 滚动365天: {days} 天",
     "remaining_line": "距离183天阈值还剩:\n{days} 天"
+  },
+  "historical_exit": {
+    "prompt": "{flag} {country} was added starting on {entry_date}.\n\nYour next known country entry is:\n{next_flag} {next_country} on {next_entry_date}.\n\nWas this also your {country} exit date?",
+    "confirm_button": "Yes, {date}",
+    "another_date_button": "Another Date",
+    "keep_open_button": "Keep Open",
+    "another_date": "Okay. {country} is still open.\n\nSend `/out {country} date` when you want to add the exit date.",
+    "keep_open": "Okay. {country} will stay open.",
+    "expired": "This action is no longer valid. Please send /in again.",
+    "already_closed": "That stay is already closed."
+  },
+  "duration": {
+    "day": "{days} day",
+    "days": "{days} days"
+  },
+  "where": {
+    "active": "📍 Current active stay\n\n{flag} {country}\nEntered on {entry_date}\n\nCurrent stay:\n{current_duration}\n\n{year} totals:\n• Calendar year: {calendar_days}\n• Rolling 365: {rolling_days}\n\nRemaining before 183-day calendar year threshold:\n{calendar_indicator} {calendar_remaining}\n\nRemaining before 183-day rolling window threshold:\n{rolling_indicator} {rolling_remaining}",
+    "no_active": "❌ No active stay found.\n\nYou can add one with:\n/in Country today"
+  },
+  "history": {
+    "invalid_usage": "Usage: `/history`, `/history 2026`, `/history Thailand`, or `/history 01.03.26 05.07.26`",
+    "empty": "🧳 No stays found for this filter.",
+    "header": "🧳 Travel history — {title}",
+    "showing": "Showing {start}–{end} of {total} stays",
+    "stay": "{flag} {country}\n{entry_date} → {exit_date}\n({duration})",
+    "newer_button": "← Newer",
+    "older_button": "Older →",
+    "custom_dates_button": "Custom Dates",
+    "custom_dates_prompt": "Send custom date range.\n\nExamples:\n01.03.26 05.07.26\n01-03-2026 05-07-2026",
+    "custom_dates_error": "❌ Could not parse date range.\n\nExamples:\n01.03.26 05.07.26\n01-03-2026 05-07-2026",
+    "custom_dates_cancelled": "Custom date range cancelled.",
+    "title_range": "{start}–{end}",
+    "title_country_year": "{country} — {year}",
+    "title_country_filter": "{country} — {filter}"
+  },
+  "settings": {
+    "menu": "⚙️ Settings\n\nChoose an option below:\n\n🌐 Language\nChange the bot language.\n\n📥 Import data\nUpload a CSV file to import your travel history.\n\n📂 Export data\nDownload your complete travel history as CSV.\n\n❌ Delete all data\nPermanently delete all your travel history and settings.\nThis action cannot be undone.",
+    "language": "Language: {language}",
+    "language_title": "Select language:",
+    "date_format": "🗓 Date format: {format}",
+    "date_format_title": "Select date format:",
+    "import_data": "Import data",
+    "export_data": "Export data",
+    "delete_data": "Delete all data",
+    "export_message": "Here's your complete travel history in CSV format.",
+    "delete_warning": "⚠️ This action is irreversible.\n\nWe strongly recommend exporting your data first.\n\nTo permanently delete all your data, send:\n\nDELETE ALL DATA",
+    "deleted": "Your data has been permanently deleted."
   },
   "stay": {
     "duplicate_exists": "⚠️ 此停留已存在:\n\n{stay_period}\n\n如有误，可删除后输入正确日期。",
@@ -46,5 +93,40 @@
     "remove_not_found": "未找到停留或已删除。",
     "remove_forbidden": "无法删除此停留。",
     "gap_warning": "⚠️ 停留之间存在未记录的时期:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n（{gap_days} 天）\n\n您可能需要添加另一个国家。"
+  },
+  "report": {
+    "title": "📊 Residency Report",
+    "title_year": "📊 Residency Report — {year}",
+    "title_country": "📊 Residency Report — {country}",
+    "title_country_year": "📊 Residency Report — {country} — {year}",
+    "line": "{flag} {country}: {days}",
+    "total": "Total: {days}",
+    "empty": "🧳 No data for this period.",
+    "country_header": "{flag} {country}",
+    "period_days": "• Days in selected period: {days}",
+    "rolling_days": "• Rolling 365: {days}",
+    "threshold_calendar": "{indicator} Remaining before 183-day calendar threshold: {days}",
+    "threshold_rolling": "{indicator} Remaining before 183-day rolling threshold: {days}"
+  },
+  "manage": {
+    "manage_button": "⚙️ Manage stay",
+    "select_prompt": "Select stay to manage:",
+    "action_prompt": "What would you like to do?",
+    "edit_prompt": "Select field to edit:",
+    "edit_button": "✏️ Edit",
+    "delete_button": "🗑 Delete",
+    "back_button": "⬅ Back",
+    "confirm_delete_prompt": "Delete this stay?",
+    "confirm_delete_button": "✅ Confirm delete",
+    "cancel_button": "❌ Cancel",
+    "country_field": "🌍 Country",
+    "entry_date_field": "📅 Entry date",
+    "exit_date_field": "📅 Exit date",
+    "ask_country": "Enter new country name:",
+    "ask_entry": "Enter new entry date:",
+    "ask_exit": "Enter new exit date (or \"Present\" to clear):",
+    "updated": "✅ Stay updated.",
+    "stay_not_found": "Stay not found or already removed.",
+    "edit_cancelled": "Edit cancelled."
   }
 }

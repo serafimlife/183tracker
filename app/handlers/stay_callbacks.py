@@ -6,8 +6,11 @@ from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.callbacks.stay import (
+    AnotherHistoricalExitCallback,
     CancelTransitionCallback,
     ConfirmTransitionCallback,
+    ConfirmHistoricalExitCallback,
+    KeepHistoricalOpenCallback,
     RemoveStayCallback,
 )
 from app.bot.states.stay_transition import StayTransitionStates
@@ -107,6 +110,108 @@ async def on_cancel_transition(
     )
 
     result = StayService(session).cancel_country_transition(user)
+    await state.clear()
+
+    if callback.message is not None:
+        await callback.message.edit_text(result.message)
+
+    await callback.answer()
+
+
+@router.callback_query(
+    ConfirmHistoricalExitCallback.filter(),
+    StayTransitionStates.confirming_historical_exit,
+)
+async def on_confirm_historical_exit(
+    callback: CallbackQuery,
+    callback_data: ConfirmHistoricalExitCallback,
+    state: FSMContext,
+    session: AsyncSession,
+) -> None:
+    if callback.from_user is None:
+        return
+
+    user_service = UserService(session)
+    user, _ = await user_service.get_or_create(
+        callback.from_user.id,
+        username=callback.from_user.username,
+        first_name=callback.from_user.first_name,
+    )
+
+    fsm_data = await state.get_data()
+    result = await StayService(session).confirm_historical_exit(
+        user, callback_data.stay_id, fsm_data
+    )
+    await state.clear()
+
+    if callback.message is None:
+        await callback.answer()
+        return
+
+    if isinstance(result, StayCommandConflict):
+        await callback.message.edit_text(result.message, reply_markup=result.keyboard)
+    else:
+        await callback.message.edit_text(result.message)
+
+    await callback.answer()
+
+
+@router.callback_query(
+    AnotherHistoricalExitCallback.filter(),
+    StayTransitionStates.confirming_historical_exit,
+)
+async def on_another_historical_exit_date(
+    callback: CallbackQuery,
+    callback_data: AnotherHistoricalExitCallback,
+    state: FSMContext,
+    session: AsyncSession,
+) -> None:
+    if callback.from_user is None:
+        return
+
+    user_service = UserService(session)
+    user, _ = await user_service.get_or_create(
+        callback.from_user.id,
+        username=callback.from_user.username,
+        first_name=callback.from_user.first_name,
+    )
+
+    fsm_data = await state.get_data()
+    result = await StayService(session).choose_another_historical_exit_date(
+        user, callback_data.stay_id, fsm_data
+    )
+    await state.clear()
+
+    if callback.message is not None:
+        await callback.message.edit_text(result.message)
+
+    await callback.answer()
+
+
+@router.callback_query(
+    KeepHistoricalOpenCallback.filter(),
+    StayTransitionStates.confirming_historical_exit,
+)
+async def on_keep_historical_open(
+    callback: CallbackQuery,
+    callback_data: KeepHistoricalOpenCallback,
+    state: FSMContext,
+    session: AsyncSession,
+) -> None:
+    if callback.from_user is None:
+        return
+
+    user_service = UserService(session)
+    user, _ = await user_service.get_or_create(
+        callback.from_user.id,
+        username=callback.from_user.username,
+        first_name=callback.from_user.first_name,
+    )
+
+    fsm_data = await state.get_data()
+    result = await StayService(session).keep_historical_stay_open(
+        user, callback_data.stay_id, fsm_data
+    )
     await state.clear()
 
     if callback.message is not None:

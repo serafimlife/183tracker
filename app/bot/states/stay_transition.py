@@ -7,3 +7,4 @@ class StayTransitionStates(StatesGroup):
     """User confirmed closing one country before entering another."""
 
     confirming = State()
+    confirming_historical_exit = State()

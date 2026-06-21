@@ -16,12 +16,13 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.base import BaseStorage
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.bot.config import get_settings
 from app.bot.logger import get_logger, setup_logging
 from app.bot.middlewares import DatabaseMiddleware
-from app.database.session import close_db, create_tables, init_db
+from app.database.session import close_db, init_db
 from app.handlers import root_router
 
 logger = get_logger(__name__)
@@ -31,8 +32,7 @@ async def on_startup(bot: Bot) -> None:
     """Runs once when polling starts — initialize shared resources."""
     settings = get_settings()
     await init_db(settings.database_url)
-    # Dev convenience: create tables if migrations are not set up yet.
-    await create_tables()
+    # Schema is managed by Alembic. Run `alembic upgrade head` before starting.
     me = await bot.get_me()
     logger.info("Bot started as @%s (id=%s)", me.username, me.id)
 
@@ -43,6 +43,27 @@ async def on_shutdown(bot: Bot) -> None:
     logger.info("Bot shutdown complete")
 
 
+def _build_fsm_storage(settings) -> BaseStorage:
+    """Return RedisStorage when REDIS_URL is configured, MemoryStorage otherwise."""
+    if settings.redis_url:
+        try:
+            from aiogram.fsm.storage.redis import RedisStorage
+
+            storage = RedisStorage.from_url(settings.redis_url)
+            logger.info("FSM storage: Redis (%s)", settings.redis_url.split("@")[-1])
+            return storage
+        except ImportError:
+            logger.warning(
+                "REDIS_URL is set but the 'redis' package is not installed. "
+                "Install it with: uv add redis  — falling back to MemoryStorage."
+            )
+    logger.warning(
+        "FSM storage: MemoryStorage. State is lost on restart and incompatible "
+        "with multi-instance deployments. Set REDIS_URL to use Redis."
+    )
+    return MemoryStorage()
+
+
 def create_dispatcher() -> Dispatcher:
     """Build dispatcher with middleware and routers.
 
@@ -50,8 +71,8 @@ def create_dispatcher() -> Dispatcher:
       - DatabaseMiddleware — injects `session` into handler data
       - Add logging, throttling, i18n, etc. here as the project grows
     """
-    # FSM storage: MemoryStorage for dev; swap for Redis in multi-instance production.
-    dp = Dispatcher(storage=MemoryStorage())
+    settings = get_settings()
+    dp = Dispatcher(storage=_build_fsm_storage(settings))
 
     # Outermost middleware wraps every update.
     dp.update.middleware(DatabaseMiddleware())

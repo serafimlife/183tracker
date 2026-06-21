@@ -25,3 +25,7 @@ htmlcov/
 
 # Alembic (local overrides only; keep versions/ in repo when added)
 # alembic/versions/*.pyc
+CLAUDE.md
+FILE_MAP.md
+cd
+.env

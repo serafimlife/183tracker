@@ -9,9 +9,7 @@ import logging
 import sys
 from typing import Final
 
-DEFAULT_FORMAT: Final[str] = (
-    "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
-)
+DEFAULT_FORMAT: Final[str] = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 DATE_FORMAT: Final[str] = "%Y-%m-%d %H:%M:%S"
 
 

@@ -1,12 +1,12 @@
 {
   "onboarding": {
-    "welcome": "👋 Welcome to Tax Residency Tracker\n\nTrack how many days you spend in each country and avoid accidentally triggering tax residency thresholds.\n\nFeatures:\n• Calendar-year tracking\n• Rolling 365-day tracking\n• Residency alerts\n• CSV/XLSX export\n• Privacy-first\n• No signup required\n• Open source\n\nThis bot estimates physical presence only and does not provide legal or tax advice.\n\nPlease choose your language:",
+    "welcome": "👋 Welcome to 183Tracker – Your Tax Residency Tracker\n\nTrack your travel and stay on top of tax residency rules — automatically.\n\n🌍 WHAT THIS BOT DOES\nLog your stays in each country and get clear, automatic calculations of your residency exposure — no spreadsheets required.\n\n📅 CALENDAR-YEAR TRACKING\nKnow exactly how many days you've spent in any country within a calendar year — the basis for most 183-day tax residency rules.\n\n🔄 ROLLING 365-DAY TRACKING\nSee your exposure on a rolling 12-month window, not just the calendar year — useful for countries that use a rolling test.\n\n🇪🇺 SCHENGEN 90/180 TRACKING\nTrack your Schengen Area days against the 90-days-in-any-180-days rule, so you never overstay by accident.\n\n📤 IMPORT & EXPORT\nBring in your travel history via CSV or XLSX, and export your data any time.\n\n🔒 PRIVACY-FIRST & FREE\nNo signup required. Your data stays yours. Completely free, forever. Open source on GitHub.\n\n⚠️ This bot estimates physical presence only and does not provide legal or tax advice. Always consult a qualified legal or tax professional regarding your taxes. We are not responsible for the correctness or accuracy of any calculation. By continuing, you agree to our Terms of Service (https://183tracker.com/tos) and Privacy Policy (https://183tracker.com/pp).\n\n\nLet's get started — choose your preferred date format:",
     "choose_date_format": "Choose your preferred date format:",
     "date_format": {
       "dmy": "1️⃣ DD.MM.YY",
       "mdy": "2️⃣ MM.DD.YY"
     },
-    "complete": "✅ Setup complete.\n\nHow to use the bot:\n\nEnter a country:\n`/in Indonesia today`\n\nLeave a country:\n`/out Indonesia 30.08.26`\n\nExamples:\n`/in Thailand 15.01.26`\n`/out Thailand today`\n\nReports:\n`/report`\n`/report 2026`\n`/report Indonesia`\n`/report rolling`\n\nThe bot automatically:\n• tracks calendar-year stays\n• tracks rolling 365-day stays\n• calculates remaining days before 183-day threshold\n• warns you before thresholds are reached\n\nYou can change language or date format anytime in /settings\n\nStart by entering the country you're currently in."
+    "complete": "✅ You're all set!\n\nYou can:\n• Start tracking new trips\n• Import existing travel history from CSV or XLSX\n\nIf you've already been traveling, import your historical stays first:\n\n/import\n\nUse /help to see all available commands."
   },
   "start": {
     "welcome_back": "Welcome back, {name}!\n\nYou're all set. Log a stay with `/in Country date` or open `/report` for a summary."
@@ -16,8 +16,11 @@
     "success": "✅ Entered {flag} {country} on {date}.",
     "invalid_usage": "Usage: `/in Country date`\n\nExample: `/in Thailand today`",
     "invalid_date": "❌ Invalid date.\n\nExample: `/in Thailand today`",
+    "prompt_country": "Which country do you want to add entry to?",
+    "prompt_date": "What is the entry date?\n\nExamples:\n- today\n- yesterday\n- 24.05.26",
+    "prompt_date_for_country": "What is the entry date for {country}?\n\nExamples:\n- today\n- yesterday\n- 24.05.26",
     "not_onboarded": "Please complete setup with /start first.",
-    "current_stay": "Current stay:\n{days} days",
+    "current_stay": "Current stay:\n{duration}",
     "year_totals_header": "{year} totals:",
     "calendar_year_line": "• Calendar year: {days} days",
     "rolling_line": "• Rolling 365: {days} days",
@@ -27,11 +30,14 @@
     "success": "{flag} Got it, you left {country} on {date}.",
     "invalid_usage": "Usage: `/out Country date`\n\nExample: `/out Thailand today`",
     "invalid_date": "❌ Invalid date.\n\nExample: `/out Thailand today`",
+    "prompt_country": "Which country do you want to add exit for?",
+    "prompt_date": "What is the exit date?\n\nExamples:\n- today\n- yesterday\n- 24.05.26",
+    "prompt_date_for_country": "What is the exit date for {country}?\n\nExamples:\n- today\n- yesterday\n- 24.05.26",
     "not_onboarded": "Please complete setup with /start first.",
     "no_open_stay": "No open stay found for {country}. Use `/in` first.",
     "already_closed_correction": "⚠️ Your latest {flag} {country} stay is already closed:\n\n{stay_period}\n\nIf this exit date is incorrect, you can remove the stay and re-add it correctly.",
     "exit_before_entry": "❌ Exit date cannot be before entry date.",
-    "duration": "Stay duration:\n{days} days",
+    "duration": "Stay duration:\n{duration}",
     "year_totals_header": "{year} totals:",
     "calendar_year_line": "• Calendar year: {days} days",
     "rolling_line": "• Rolling 365: {days} days",
@@ -47,6 +53,71 @@
     "already_closed": "That stay is already closed. Please send /in again.",
     "invalid_dates": "Invalid dates for this transition. Please send /in again."
   },
+  "historical_exit": {
+    "prompt": "{flag} {country} was added starting on {entry_date}.\n\nYour next known country entry is:\n{next_flag} {next_country} on {next_entry_date}.\n\nWas this also your {country} exit date?",
+    "confirm_button": "Yes, {date}",
+    "another_date_button": "Another Date",
+    "keep_open_button": "Keep Open",
+    "another_date": "Okay. {country} is still open.\n\nSend `/out {country} date` when you want to add the exit date.",
+    "keep_open": "Okay. {country} will stay open.",
+    "expired": "This action is no longer valid. Please send /in again.",
+    "already_closed": "That stay is already closed."
+  },
+  "schengen": {
+    "header": "🇪🇺 Schengen Area (90/180-day rule)",
+    "days_used": "• Days used in 180-day window: {days}",
+    "days_remaining": "{indicator} Remaining before 90-day cap: {days}",
+    "next_free_date": "• Next available entry: {date}"
+  },
+  "report": {
+    "title": "📊 Residency Report",
+    "title_year": "📊 Residency Report — {year}",
+    "title_country": "📊 Residency Report — {country}",
+    "title_country_year": "📊 Residency Report — {country} — {year}",
+    "line": "{flag} {country}: {days}",
+    "total": "Total: {days}",
+    "empty": "🧳 No data for this period.",
+    "country_header": "{flag} {country}",
+    "period_days": "• Days in selected period: {days}",
+    "rolling_days": "• Rolling 365: {days}",
+    "threshold_calendar": "{indicator} Remaining before 183-day calendar threshold: {days}",
+    "threshold_rolling": "{indicator} Remaining before 183-day rolling threshold: {days}"
+  },
+  "duration": {
+    "day": "{days} day",
+    "days": "{days} days"
+  },
+  "where": {
+    "active": "📍 Current active stay\n\n{flag} {country}\nEntered on {entry_date}\n\nCurrent stay:\n{current_duration}\n\n{year} totals:\n• Calendar year: {calendar_days}\n• Rolling 365: {rolling_days}\n\nRemaining before 183-day calendar year threshold:\n{calendar_indicator} {calendar_remaining}\n\nRemaining before 183-day rolling window threshold:\n{rolling_indicator} {rolling_remaining}",
+    "no_active": "❌ No active stay found.\n\nYou can add one with:\n/in Country today"
+  },
+  "history": {
+    "invalid_usage": "Usage: `/history`, `/history 2026`, `/history Thailand`, or `/history 01.03.26 05.07.26`",
+    "empty": "🧳 No stays found for this filter.",
+    "header": "🧳 Travel history — {title}",
+    "showing": "Showing {start}–{end} of {total} stays",
+    "stay": "{flag} {country}\n{entry_date} → {exit_date}\n({duration})",
+    "newer_button": "← Newer",
+    "older_button": "Older →",
+    "custom_dates_button": "Custom Dates",
+    "custom_dates_prompt": "Send custom date range.\n\nExamples:\n01.03.26 05.07.26\n01-03-2026 05-07-2026",
+    "custom_dates_error": "❌ Could not parse date range.\n\nExamples:\n01.03.26 05.07.26\n01-03-2026 05-07-2026",
+    "custom_dates_cancelled": "Custom date range cancelled.",
+    "title_range": "{start}–{end}",
+    "title_country_year": "{country} — {year}",
+    "title_country_filter": "{country} — {filter}"
+  },
+  "settings": {
+    "menu": "⚙️ Settings\n\nChoose an option below:",
+    "date_format": "🗓 Date format: {format}",
+    "date_format_title": "Select date format:",
+    "import_data": "Import data",
+    "export_data": "Export data",
+    "delete_data": "Delete all data",
+    "export_message": "Here's your complete travel history in CSV format.",
+    "delete_warning": "⚠️ This action is irreversible.\n\nWe strongly recommend exporting your data first.\n\nTo permanently delete all your data, send:\n\nDELETE ALL DATA",
+    "deleted": "Your data has been permanently deleted."
+  },
   "stay": {
     "duplicate_exists": "⚠️ This stay already exists:\n\n{stay_period}\n\nIf this is incorrect, you can remove it and add corrected dates.",
     "overlap_exists": "⚠️ This stay conflicts with an existing stay:\n\n{stay_period}\n\nIf this is incorrect, you can remove it and add corrected dates.",
@@ -56,5 +127,26 @@
     "remove_not_found": "Stay not found or already removed.",
     "remove_forbidden": "You cannot remove this stay.",
     "gap_warning": "⚠️ There is an untracked period between your stays:\n\n{from_country} → {to_country}\n{gap_start} → {gap_end}\n({gap_days} days)\n\nYou may want to add another country for this period."
+  },
+  "manage": {
+    "manage_button": "⚙️ Manage stay",
+    "select_prompt": "Select stay to manage:",
+    "action_prompt": "What would you like to do?",
+    "edit_prompt": "Select field to edit:",
+    "edit_button": "✏️ Edit",
+    "delete_button": "🗑 Delete",
+    "back_button": "⬅ Back",
+    "confirm_delete_prompt": "Delete this stay?",
+    "confirm_delete_button": "✅ Confirm delete",
+    "cancel_button": "❌ Cancel",
+    "country_field": "🌍 Country",
+    "entry_date_field": "📅 Entry date",
+    "exit_date_field": "📅 Exit date",
+    "ask_country": "Enter new country name:",
+    "ask_entry": "Enter new entry date:",
+    "ask_exit": "Enter new exit date (or \"Present\" to clear):",
+    "updated": "✅ Stay updated.",
+    "stay_not_found": "Stay not found or already removed.",
+    "edit_cancelled": "Edit cancelled."
   }
 }

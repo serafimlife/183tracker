@@ -8,8 +8,11 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.callbacks.stay import (
+    AnotherHistoricalExitCallback,
     CancelTransitionCallback,
     ConfirmTransitionCallback,
+    ConfirmHistoricalExitCallback,
+    KeepHistoricalOpenCallback,
     RemoveStayCallback,
 )
 from app.bot.logger import get_logger
@@ -33,6 +36,7 @@ from app.services.parsing_service import ParsingService
 from app.services.residency_service import ResidencyService, stays_to_records
 from app.utils.countries import ResolvedCountry, flag_emoji, resolve_country
 from app.utils.dates import parse_entry_date
+from app.utils.formatters import format_duration_days
 from app.utils.onboarding import DateFormat
 
 logger = get_logger(__name__)
@@ -44,6 +48,8 @@ FSM_CLOSE_STAY_ID = "close_stay_id"
 FSM_NEW_COUNTRY_CODE = "new_country_code"
 FSM_NEW_COUNTRY_NAME = "new_country_name"
 FSM_ENTRY_DATE = "entry_date"
+FSM_HISTORICAL_STAY_ID = "historical_stay_id"
+FSM_HISTORICAL_EXIT_DATE = "historical_exit_date"
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +80,15 @@ class StayCommandTransition:
 
 
 @dataclass(frozen=True, slots=True)
+class StayCommandHistoricalExitPrompt:
+    """Prompt to optionally close a newly added historical stay."""
+
+    message: str
+    keyboard: InlineKeyboardMarkup
+    fsm_data: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
 class StayRemoveSuccess:
     message: str
 
@@ -84,16 +99,138 @@ class StayRemoveError:
 
 
 StayCommandResult = (
-    StayCommandSuccess | StayCommandError | StayCommandConflict | StayCommandTransition
+    StayCommandSuccess
+    | StayCommandError
+    | StayCommandConflict
+    | StayCommandTransition
+    | StayCommandHistoricalExitPrompt
 )
 StayRemoveResult = StayRemoveSuccess | StayRemoveError
+
+
+@dataclass(frozen=True, slots=True)
+class StayUpdateSuccess:
+    message: str
+
+
+@dataclass(frozen=True, slots=True)
+class StayUpdateError:
+    message: str
+
+
+StayUpdateResult = StayUpdateSuccess | StayUpdateError | StayCommandConflict
 
 
 class StayService:
     def __init__(self, session: AsyncSession) -> None:
         self._repo = StayRepository(session)
 
-    async def handle_in_command(self, user: User, command_text: str) -> StayCommandResult:
+    async def update_stay_country(
+        self, user: User, stay_id: int, country_input: str
+    ) -> StayUpdateResult:
+        i18n = LocalizationService(user.language or "en")
+        stay = await self._repo.get_by_id(stay_id)
+        if stay is None or stay.telegram_id != user.telegram_id:
+            return StayUpdateError(message=i18n.t("manage.stay_not_found"))
+        country = resolve_country(country_input)
+        if country is None:
+            return StayUpdateError(message=i18n.t("in.country_not_recognized"))
+        await self._repo.update_stay(
+            stay,
+            country_code=country["code"],
+            country_name=country["name"],
+        )
+        logger.info(
+            "stay_country_updated telegram_id=%s stay_id=%s country=%s",
+            user.telegram_id,
+            stay_id,
+            country["code"],
+        )
+        return StayUpdateSuccess(message=i18n.t("manage.updated"))
+
+    async def update_stay_entry_date(
+        self, user: User, stay_id: int, date_str: str
+    ) -> StayUpdateResult:
+        i18n = LocalizationService(user.language or "en")
+        stay = await self._repo.get_by_id(stay_id)
+        if stay is None or stay.telegram_id != user.telegram_id:
+            return StayUpdateError(message=i18n.t("manage.stay_not_found"))
+        entry_date = parse_entry_date(date_str, date_format=user.date_format)
+        if entry_date is None:
+            return StayUpdateError(message=i18n.t("in.invalid_date"))
+        if stay.exit_date is not None and entry_date > stay.exit_date:
+            return StayUpdateError(message=i18n.t("out.exit_before_entry"))
+        existing = await self._repo.list_by_user(user.telegram_id)
+        records = stays_to_records(existing)
+        conflict = find_overlapping_stay(
+            records,
+            entry_date,
+            stay.exit_date,
+            exclude_stay_id=stay.id,
+            as_of=date.today(),
+        )
+        if conflict is not None:
+            conflict_stay = _stay_from_record(existing, conflict)
+            if conflict_stay is not None:
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
+        await self._repo.update_stay(stay, entry_date=entry_date)
+        logger.info(
+            "stay_entry_updated telegram_id=%s stay_id=%s entry_date=%s",
+            user.telegram_id,
+            stay_id,
+            entry_date.isoformat(),
+        )
+        return StayUpdateSuccess(message=i18n.t("manage.updated"))
+
+    async def update_stay_exit_date(
+        self, user: User, stay_id: int, date_str: str
+    ) -> StayUpdateResult:
+        i18n = LocalizationService(user.language or "en")
+        stay = await self._repo.get_by_id(stay_id)
+        if stay is None or stay.telegram_id != user.telegram_id:
+            return StayUpdateError(message=i18n.t("manage.stay_not_found"))
+        present_label = i18n.t("stay.present")
+        if date_str.strip().lower() == present_label.lower():
+            clear_exit = True
+            new_exit_date: date | None = None
+        else:
+            parsed_exit = parse_entry_date(date_str, date_format=user.date_format)
+            if parsed_exit is None:
+                return StayUpdateError(message=i18n.t("in.invalid_date"))
+            if parsed_exit < stay.entry_date:
+                return StayUpdateError(message=i18n.t("out.exit_before_entry"))
+            clear_exit = False
+            new_exit_date = parsed_exit
+        existing = await self._repo.list_by_user(user.telegram_id)
+        records = stays_to_records(existing)
+        conflict = find_overlapping_stay(
+            records,
+            stay.entry_date,
+            new_exit_date,
+            exclude_stay_id=stay.id,
+            as_of=date.today(),
+        )
+        if conflict is not None:
+            conflict_stay = _stay_from_record(existing, conflict)
+            if conflict_stay is not None:
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
+        await self._repo.update_stay(
+            stay, new_exit_date=new_exit_date, clear_exit=clear_exit
+        )
+        logger.info(
+            "stay_exit_updated telegram_id=%s stay_id=%s",
+            user.telegram_id,
+            stay_id,
+        )
+        return StayUpdateSuccess(message=i18n.t("manage.updated"))
+
+    async def handle_in_command(
+        self, user: User, command_text: str
+    ) -> StayCommandResult:
         i18n = LocalizationService(user.language or "en")
 
         if not user.is_onboarded:
@@ -122,6 +259,7 @@ class StayService:
         as_of = date.today()
         existing = await self._repo.list_by_user(user.telegram_id)
         records = stays_to_records(existing)
+        next_stay = _next_chronological_stay(existing, entry_date)
 
         # 1. Duplicate detection
         duplicate = find_duplicate_entry(records, country["code"], entry_date)
@@ -142,20 +280,29 @@ class StayService:
                 )
 
         # 3. Overlap validation
+        validation_exit_date = _historical_validation_exit_date(next_stay, entry_date)
         conflict_record = find_overlapping_stay(
             records,
             entry_date,
-            None,
+            validation_exit_date,
             as_of=as_of,
         )
         if conflict_record is not None:
             conflict_stay = _stay_from_record(existing, conflict_record)
             if conflict_stay is not None:
-                return self._conflict_response(i18n, user, conflict_stay, kind="overlap")
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
 
         # 4. Create stay
         return await self._create_in_stay(
-            user, country, entry_date, existing, records, i18n
+            user,
+            country,
+            entry_date,
+            existing,
+            records,
+            i18n,
+            next_stay=next_stay,
         )
 
     async def confirm_country_transition(
@@ -212,7 +359,9 @@ class StayService:
         if conflict_record is not None:
             conflict_stay = _stay_from_record(existing, conflict_record)
             if conflict_stay is not None:
-                return self._conflict_response(i18n, user, conflict_stay, kind="overlap")
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
 
         await self._repo.close_stay(close_stay, entry_date)
         logger.info(
@@ -254,7 +403,97 @@ class StayService:
         i18n = LocalizationService(user.language or "en")
         return StayCommandSuccess(message=i18n.t("transition.cancelled"))
 
-    async def handle_out_command(self, user: User, command_text: str) -> StayCommandResult:
+    async def confirm_historical_exit(
+        self,
+        user: User,
+        stay_id: int,
+        fsm_data: dict[str, Any],
+    ) -> StayCommandResult:
+        i18n = LocalizationService(user.language or "en")
+        stay, exit_date = await self._historical_exit_context(
+            user, stay_id, fsm_data, i18n
+        )
+        if isinstance(stay, StayCommandError):
+            return stay
+
+        existing = await self._repo.list_by_user(user.telegram_id)
+        records = stays_to_records(existing)
+        conflict_record = find_overlapping_stay(
+            records,
+            stay.entry_date,
+            exit_date,
+            exclude_stay_id=stay.id,
+            as_of=date.today(),
+        )
+        if conflict_record is not None:
+            conflict_stay = _stay_from_record(existing, conflict_record)
+            if conflict_stay is not None:
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
+
+        await self._repo.close_stay(stay, exit_date)
+        logger.info(
+            "historical_exit_confirmed telegram_id=%s stay_id=%s exit_date=%s",
+            user.telegram_id,
+            stay.id,
+            exit_date.isoformat(),
+        )
+        duration = stay_duration_days(stay.entry_date, exit_date, as_of=exit_date)
+        country: ResolvedCountry = {
+            "code": stay.country_code,
+            "name": stay.country_name,
+            "flag": flag_emoji(stay.country_code),
+        }
+        return StayCommandSuccess(
+            message=self._build_out_message(
+                i18n,
+                user,
+                country,
+                exit_date,
+                existing,
+                stay,
+                duration,
+            )
+        )
+
+    async def choose_another_historical_exit_date(
+        self,
+        user: User,
+        stay_id: int,
+        fsm_data: dict[str, Any],
+    ) -> StayCommandSuccess | StayCommandError:
+        i18n = LocalizationService(user.language or "en")
+        stay, _ = await self._historical_exit_context(user, stay_id, fsm_data, i18n)
+        if isinstance(stay, StayCommandError):
+            return stay
+        return StayCommandSuccess(
+            message=i18n.t(
+                "historical_exit.another_date",
+                country=stay.country_name,
+            )
+        )
+
+    async def keep_historical_stay_open(
+        self,
+        user: User,
+        stay_id: int,
+        fsm_data: dict[str, Any],
+    ) -> StayCommandSuccess | StayCommandError:
+        i18n = LocalizationService(user.language or "en")
+        stay, _ = await self._historical_exit_context(user, stay_id, fsm_data, i18n)
+        if isinstance(stay, StayCommandError):
+            return stay
+        return StayCommandSuccess(
+            message=i18n.t(
+                "historical_exit.keep_open",
+                country=stay.country_name,
+            )
+        )
+
+    async def handle_out_command(
+        self, user: User, command_text: str
+    ) -> StayCommandResult:
         i18n = LocalizationService(user.language or "en")
 
         if not user.is_onboarded:
@@ -289,9 +528,7 @@ class StayService:
                     )
             latest_closed = _latest_closed_stay(existing, country["code"])
             if latest_closed is not None and latest_closed.exit_date != exit_date:
-                return self._closed_stay_correction_response(
-                    i18n, user, latest_closed
-                )
+                return self._closed_stay_correction_response(i18n, user, latest_closed)
             return StayCommandError(
                 message=i18n.t("out.no_open_stay", country=country["name"])
             )
@@ -310,7 +547,9 @@ class StayService:
         if conflict_record is not None:
             conflict_stay = _stay_from_record(existing, conflict_record)
             if conflict_stay is not None:
-                return self._conflict_response(i18n, user, conflict_stay, kind="overlap")
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
 
         await self._repo.close_stay(open_stay, exit_date)
         logger.info(
@@ -320,9 +559,7 @@ class StayService:
             exit_date.isoformat(),
         )
 
-        duration = stay_duration_days(
-            open_stay.entry_date, exit_date, as_of=exit_date
-        )
+        duration = stay_duration_days(open_stay.entry_date, exit_date, as_of=exit_date)
         message = self._build_out_message(
             i18n,
             user,
@@ -333,6 +570,80 @@ class StayService:
             duration,
         )
         return StayCommandSuccess(message=message)
+
+    async def handle_log_command(
+        self, user: User, command_text: str
+    ) -> StayCommandResult:
+        """Create a completed stay from one command."""
+        i18n = LocalizationService(user.language or "en")
+
+        if not user.is_onboarded:
+            return StayCommandError(message=i18n.t("in.not_onboarded"))
+
+        parsed = ParsingService.parse_log_command(command_text)
+        if parsed is None:
+            return StayCommandError(
+                message="Usage: `/log Country entry-date exit-date`"
+            )
+
+        country = resolve_country(parsed.country_input)
+        if country is None:
+            return StayCommandError(message=i18n.t("in.country_not_recognized"))
+
+        entry_date = parse_entry_date(
+            parsed.entry_date_str,
+            date_format=user.date_format,
+        )
+        exit_date = parse_entry_date(
+            parsed.exit_date_str,
+            date_format=user.date_format,
+        )
+        if entry_date is None or exit_date is None:
+            return StayCommandError(message="❌ Invalid entry or exit date.")
+        if exit_date < entry_date:
+            return StayCommandError(message=i18n.t("out.exit_before_entry"))
+
+        existing = await self._repo.list_by_user(user.telegram_id)
+        records = stays_to_records(existing)
+
+        duplicate = find_duplicate_entry(records, country["code"], entry_date)
+        if duplicate is not None:
+            conflict_stay = _stay_from_record(existing, duplicate)
+            if conflict_stay is not None:
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="duplicate"
+                )
+
+        conflict_record = find_overlapping_stay(
+            records,
+            entry_date,
+            exit_date,
+            as_of=date.today(),
+        )
+        if conflict_record is not None:
+            conflict_stay = _stay_from_record(existing, conflict_record)
+            if conflict_stay is not None:
+                return self._conflict_response(
+                    i18n, user, conflict_stay, kind="overlap"
+                )
+
+        stay = await self._repo.create_entry(
+            user.telegram_id,
+            country_code=country["code"],
+            country_name=country["name"],
+            entry_date=entry_date,
+        )
+        await self._repo.close_stay(stay, exit_date)
+
+        duration = stay_duration_days(entry_date, exit_date, as_of=exit_date)
+        return StayCommandSuccess(
+            message=(
+                f"✅ Logged {country['flag']} {country['name']}: "
+                f"{_format_short_date(entry_date, user.date_format)} → "
+                f"{_format_short_date(exit_date, user.date_format)}\n"
+                f"Stay duration: {format_duration_days(duration, i18n)}"
+            )
+        )
 
     async def remove_stay(self, user: User, stay_id: int) -> StayRemoveResult:
         """Delete a stay after verifying it belongs to the requesting user."""
@@ -373,7 +684,9 @@ class StayService:
         existing: list[Stay],
         records: list[StayRecord],
         i18n: LocalizationService,
-    ) -> StayCommandSuccess:
+        *,
+        next_stay: Stay | None = None,
+    ) -> StayCommandSuccess | StayCommandHistoricalExitPrompt:
         stay = await self._repo.create_entry(
             user.telegram_id,
             country_code=country["code"],
@@ -386,6 +699,9 @@ class StayService:
             country["code"],
             entry_date.isoformat(),
         )
+
+        if next_stay is not None and entry_date < next_stay.entry_date:
+            return self._historical_exit_prompt(i18n, user, stay, next_stay)
 
         all_stays = existing + [stay]
         gap = find_untracked_gap(records, entry_date)
@@ -464,6 +780,102 @@ class StayService:
         return StayCommandTransition(
             message=message, keyboard=keyboard, fsm_data=fsm_data
         )
+
+    def _historical_exit_prompt(
+        self,
+        i18n: LocalizationService,
+        user: User,
+        historical_stay: Stay,
+        next_stay: Stay,
+    ) -> StayCommandHistoricalExitPrompt:
+        message = i18n.t(
+            "historical_exit.prompt",
+            flag=flag_emoji(historical_stay.country_code),
+            country=historical_stay.country_name,
+            entry_date=_format_short_date(historical_stay.entry_date, user.date_format),
+            next_flag=flag_emoji(next_stay.country_code),
+            next_country=next_stay.country_name,
+            next_entry_date=_format_short_date(next_stay.entry_date, user.date_format),
+        )
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=i18n.t(
+                            "historical_exit.confirm_button",
+                            date=_format_day_month(
+                                next_stay.entry_date, user.date_format
+                            ),
+                        ),
+                        callback_data=ConfirmHistoricalExitCallback(
+                            stay_id=historical_stay.id
+                        ).pack(),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text=i18n.t("historical_exit.another_date_button"),
+                        callback_data=AnotherHistoricalExitCallback(
+                            stay_id=historical_stay.id
+                        ).pack(),
+                    ),
+                    InlineKeyboardButton(
+                        text=i18n.t("historical_exit.keep_open_button"),
+                        callback_data=KeepHistoricalOpenCallback(
+                            stay_id=historical_stay.id
+                        ).pack(),
+                    ),
+                ],
+            ]
+        )
+        fsm_data = {
+            FSM_HISTORICAL_STAY_ID: historical_stay.id,
+            FSM_HISTORICAL_EXIT_DATE: next_stay.entry_date.isoformat(),
+        }
+        logger.info(
+            "historical_exit_prompted telegram_id=%s stay_id=%s next_stay_id=%s exit_date=%s",
+            user.telegram_id,
+            historical_stay.id,
+            next_stay.id,
+            next_stay.entry_date.isoformat(),
+        )
+        return StayCommandHistoricalExitPrompt(
+            message=message,
+            keyboard=keyboard,
+            fsm_data=fsm_data,
+        )
+
+    async def _historical_exit_context(
+        self,
+        user: User,
+        stay_id: int,
+        fsm_data: dict[str, Any],
+        i18n: LocalizationService,
+    ) -> tuple[Stay, date] | tuple[StayCommandError, None]:
+        if not _validate_historical_exit_fsm_data(fsm_data):
+            return StayCommandError(message=i18n.t("historical_exit.expired")), None
+
+        if int(fsm_data[FSM_HISTORICAL_STAY_ID]) != stay_id:
+            logger.warning(
+                "historical_exit_stay_id_mismatch telegram_id=%s callback=%s fsm=%s",
+                user.telegram_id,
+                stay_id,
+                fsm_data.get(FSM_HISTORICAL_STAY_ID),
+            )
+            return StayCommandError(message=i18n.t("historical_exit.expired")), None
+
+        stay = await self._repo.get_by_id(stay_id)
+        if stay is None or stay.telegram_id != user.telegram_id:
+            return StayCommandError(message=i18n.t("historical_exit.expired")), None
+        if stay.exit_date is not None:
+            return StayCommandError(
+                message=i18n.t("historical_exit.already_closed")
+            ), None
+
+        exit_date = date.fromisoformat(str(fsm_data[FSM_HISTORICAL_EXIT_DATE]))
+        if exit_date < stay.entry_date:
+            return StayCommandError(message=i18n.t("out.exit_before_entry")), None
+        return stay, exit_date
 
     def _build_transition_success_message(
         self,
@@ -583,7 +995,7 @@ class StayService:
             "",
             i18n.t(
                 "in.current_stay",
-                days=stats.current_stay_days or 1,
+                duration=format_duration_days(stats.current_stay_days or 1, i18n),
             ),
             "",
             i18n.t("in.year_totals_header", year=stats.year),
@@ -622,7 +1034,7 @@ class StayService:
                     date=_format_short_date(exit_date, user.date_format),
                 ),
                 "",
-                i18n.t("out.duration", days=duration),
+                i18n.t("out.duration", duration=format_duration_days(duration, i18n)),
                 "",
                 i18n.t("out.year_totals_header", year=stats.year),
                 i18n.t("out.calendar_year_line", days=stats.calendar_year_days),
@@ -661,6 +1073,11 @@ def _validate_fsm_data(data: dict[str, Any]) -> bool:
     return all(key in data for key in required)
 
 
+def _validate_historical_exit_fsm_data(data: dict[str, Any]) -> bool:
+    required = (FSM_HISTORICAL_STAY_ID, FSM_HISTORICAL_EXIT_DATE)
+    return all(key in data for key in required)
+
+
 def _stay_from_record(stays: list[Stay], record: StayRecord) -> Stay | None:
     if record.stay_id is not None:
         for stay in stays:
@@ -694,7 +1111,29 @@ def _latest_closed_stay(stays: list[Stay], country_code: str) -> Stay | None:
     )
 
 
+def _next_chronological_stay(stays: list[Stay], entry_date: date) -> Stay | None:
+    candidates = [stay for stay in stays if stay.entry_date > entry_date]
+    if not candidates:
+        return None
+    return min(candidates, key=lambda stay: (stay.entry_date, stay.id or 0))
+
+
+def _historical_validation_exit_date(
+    next_stay: Stay | None,
+    entry_date: date,
+) -> date | None:
+    if next_stay is None or entry_date >= next_stay.entry_date:
+        return None
+    return next_stay.entry_date
+
+
 def _format_short_date(value: date, date_format: str | None) -> str:
     if date_format == DateFormat.MDY.value:
         return f"{value.strftime('%B')} {value.day}, {value.year}"
     return f"{value.day} {value.strftime('%B')} {value.year}"
+
+
+def _format_day_month(value: date, date_format: str | None) -> str:
+    if date_format == DateFormat.MDY.value:
+        return f"{value.strftime('%B')} {value.day}"
+    return f"{value.day} {value.strftime('%B')}"

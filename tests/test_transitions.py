@@ -53,8 +53,6 @@ def test_overlap_is_not_transition() -> None:
     entry = date(2026, 1, 29)
     assert find_open_stay_other_country(stays, "TH") is None
     assert (
-        find_overlapping_stay(
-            stays, entry, date(2026, 2, 10), as_of=date(2026, 2, 10)
-        )
+        find_overlapping_stay(stays, entry, date(2026, 2, 10), as_of=date(2026, 2, 10))
         is not None
     )

@@ -12,9 +12,7 @@ def find_open_stay_other_country(
 ) -> StayRecord | None:
     """Return the latest open stay in a country different from `new_country_code`."""
     candidates = [
-        s
-        for s in stays
-        if s.exit_date is None and s.country_code != new_country_code
+        s for s in stays if s.exit_date is None and s.country_code != new_country_code
     ]
     if not candidates:
         return None

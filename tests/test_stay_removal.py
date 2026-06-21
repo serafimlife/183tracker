@@ -10,6 +10,7 @@ from app.models.user import User
 from app.services.stay_service import (
     StayCommandConflict,
     StayCommandError,
+    StayCommandSuccess,
     StayRemoveError,
     StayRemoveSuccess,
     StayService,
@@ -88,7 +89,9 @@ async def test_remove_another_users_stay(service: StayService) -> None:
 
 
 @pytest.mark.asyncio
-async def test_duplicate_in_returns_conflict_with_keyboard(service: StayService) -> None:
+async def test_duplicate_in_returns_conflict_with_keyboard(
+    service: StayService,
+) -> None:
     user = _user()
     existing = [_stay(1, user.telegram_id)]
     service._repo.list_by_user.return_value = existing
@@ -206,3 +209,31 @@ async def test_out_already_correct_exit_date_uses_duplicate_conflict(
     assert "This stay already exists" in result.message
     assert "Your latest" not in result.message
     service._repo.close_stay.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_historical_open_stay_can_be_closed_before_active_stay(
+    service: StayService,
+) -> None:
+    user = _user()
+    indonesia = _stay(
+        1,
+        user.telegram_id,
+        entry="2026-02-25",
+        code="ID",
+        name="Indonesia",
+    )
+    thailand = _stay(
+        2,
+        user.telegram_id,
+        entry="2026-05-17",
+        code="TH",
+        name="Thailand",
+    )
+    service._repo.list_by_user.return_value = [indonesia, thailand]
+    service._repo.get_open_stay.return_value = indonesia
+
+    result = await service.handle_out_command(user, "/out Indonesia 16.05.26")
+
+    assert isinstance(result, StayCommandSuccess)
+    service._repo.close_stay.assert_awaited_once_with(indonesia, date(2026, 5, 16))
