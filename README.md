@@ -53,7 +53,7 @@ SSH into your server and clone the repository:
 
 ```bash
 git clone https://github.com/serafimlife/183tracker
-cd 183days_rule_bot
+cd 183tracker
 ```
 
 ### 3. Install uv and Python 3.12 *(manual deployment only)*
