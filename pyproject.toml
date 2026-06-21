@@ -2,7 +2,6 @@
 name = "183days-rule-bot"
 version = "0.1.0"
 description = "Telegram bot for tracking tax residency under the 183-day rule"
-readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "aiogram>=3.15,<4",
