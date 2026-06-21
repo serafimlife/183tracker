@@ -16,7 +16,7 @@ RUN chmod +x ./entrypoint.sh
 
 # Run as non-root
 RUN groupadd --gid 1001 botuser \
-    && useradd --uid 1001 --gid 1001 --no-create-home botuser \
+    && useradd --uid 1001 --gid 1001 --create-home botuser \
     && chown -R botuser:botuser /app
 
 USER botuser
