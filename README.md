@@ -2,6 +2,10 @@
 
 A Telegram bot for digital nomads and expats to track physical presence across countries, monitor 183-day tax residency thresholds, and stay on top of the Schengen Area 90/180-day rule.
 
+Use for free in Telegram: https://t.me/tracker183bot
+Official website: https://183tracker.com/
+For support, questions, and feedback: mail@183tracker.com
+
 ---
 
 ## Features
@@ -13,7 +17,6 @@ A Telegram bot for digital nomads and expats to track physical presence across c
 - **Threshold alerts** — colour-coded indicators (🟢 🟡 🔴) as you approach the 183-day and 90-day caps
 - **Travel history** — paginated history with country and date filters; edit or remove individual stays
 - **Import / export** — bring in historical stays from CSV or XLSX; export your full history at any time
-- **Multi-language** — English, Spanish, French, German, Russian, Japanese, Korean, Chinese
 - **Privacy-first** — no account required; data is tied only to your Telegram user ID
 
 ---
@@ -52,7 +55,7 @@ Two deployment paths are available. **Full Docker** (steps 5 → 7 below) runs b
 SSH into your server and clone the repository:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/serafimlife/183tracker
 cd 183days_rule_bot
 ```
 
