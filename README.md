@@ -88,19 +88,23 @@ The variables are:
 | Variable | Required | Description |
 |---|---|---|
 | `BOT_TOKEN` | Yes | The token from @BotFather (step 1) |
-| `DATABASE_URL` | Yes | PostgreSQL connection string — see below |
+| `POSTGRES_USER` | Yes (Docker) | PostgreSQL username. Default: `botuser` |
+| `POSTGRES_PASSWORD` | Yes (Docker) | PostgreSQL password. Generate a strong one: `openssl rand -base64 32` |
+| `POSTGRES_DB` | Yes (Docker) | Database name. Default: `183days_bot` |
+| `DATABASE_URL` | Yes (manual) | PostgreSQL connection string — see below |
+| `ALLOWED_USER_IDS` | No | Comma-separated Telegram user IDs that may use the bot. **Leave empty for a public bot** — any Telegram user will be allowed. Set this only for a private/personal instance (e.g. `123456789,987654321`). Get your ID from [@userinfobot](https://t.me/userinfobot). |
 | `LOG_LEVEL` | No | Log verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`. Defaults to `INFO` |
 | `REDIS_URL` | No | Redis connection string (e.g. `redis://localhost:6379/0`). Required only for multi-instance deployments or if you need FSM state to survive bot restarts. Without it, conversation state is held in memory and lost on restart |
 
-The `DATABASE_URL` must use the `asyncpg` driver format:
+**Full Docker path:** `DATABASE_URL` is built automatically by `docker-compose.yml` from the `POSTGRES_*` variables — you do not need to set it manually. Just fill in `POSTGRES_PASSWORD` with a strong value.
+
+**Manual/systemd path:** Set `DATABASE_URL` directly using the `asyncpg` driver format:
 
 ```
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/183days_bot
+DATABASE_URL=postgresql+asyncpg://botuser:yourpassword@localhost:5432/183days_bot
 ```
 
-If you use the provided `docker-compose.yml` to run PostgreSQL (recommended — see step 5), the default value in `.env.example` is already correct.
-
-**Keep `.env` private** — it contains your bot token. Do not commit it to version control.
+**Keep `.env` private** — it contains your bot token and database password. Never commit it to version control.
 
 ### 5. Start the services
 
@@ -275,19 +279,48 @@ Never run any of the dangerous commands on a production deployment unless you in
 
 ### Backups
 
-Take a backup before updates or any Docker maintenance:
+Take a backup before updates or any Docker maintenance (substitute your `POSTGRES_USER` and `POSTGRES_DB` values if you changed the defaults):
 
 ```bash
-docker exec 183days_bot_db pg_dump -U postgres 183days_bot > backup_$(date +%Y%m%d).sql
+docker exec 183days_bot_db pg_dump -U botuser 183days_bot > backup_$(date +%Y%m%d).sql
 ```
 
 Restore from a backup:
 
 ```bash
-cat backup_20240101.sql | docker exec -i 183days_bot_db psql -U postgres -d 183days_bot
+cat backup_20240101.sql | docker exec -i 183days_bot_db psql -U botuser -d 183days_bot
 ```
 
 Store backups outside the server (e.g. copy them to your local machine with `scp`) so they survive a VPS failure.
+
+---
+
+## Security hardening
+
+The following security measures are built into the provided configuration.
+
+### PostgreSQL is not exposed to the internet
+
+`docker-compose.yml` does **not** publish the PostgreSQL port to the host. The database is reachable only from inside the Docker Compose network (i.e. by the bot container). No external TCP access to port 5432 is possible. This is the single most important control — a publicly exposed PostgreSQL with weak credentials is the most common cause of database compromise.
+
+### Strong, randomised database credentials
+
+The template uses `POSTGRES_USER=botuser` (not the default superuser `postgres`) and requires you to generate a strong password with `openssl rand -base64 32`. The password lives only in `.env` and is never hardcoded in any source file.
+
+### Access control with `ALLOWED_USER_IDS`
+
+The `ALLOWED_USER_IDS` environment variable is an optional per-user allowlist enforced at the outermost middleware layer (before any database activity). 
+
+- **Leave it empty for a public bot** — all Telegram users can interact with the bot. This is the normal setting for a publicly advertised service.
+- **Set it for a private/personal instance** — only the listed Telegram user IDs will receive responses; all others are silently ignored and logged at WARNING level. Get your own Telegram user ID from [@userinfobot](https://t.me/userinfobot).
+
+### Input sanitisation
+
+User-supplied content (display names, CSV import data) is passed through HTML escapers before being included in any bot response, preventing HTML injection via Telegram's Bot API parse mode.
+
+### Pinned Docker base image for `uv`
+
+`Dockerfile` references a specific version tag (`ghcr.io/astral-sh/uv:0.7.13`) rather than `:latest`, so builds are reproducible and a supply-chain compromise of the `:latest` tag cannot silently affect your deployment. To upgrade, bump the version tag in the `FROM` line.
 
 ---
 

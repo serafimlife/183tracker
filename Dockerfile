@@ -1,7 +1,8 @@
 FROM python:3.12-slim
 
-# Install uv from the official image
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Pin uv to an explicit version. To upgrade: bump the tag and update the digest.
+# Get the current digest with: docker buildx imagetools inspect ghcr.io/astral-sh/uv:0.7.13
+COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /usr/local/bin/uv
 
 WORKDIR /app
 

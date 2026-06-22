@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from aiogram.fsm.state import State
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.text_decorations import html_decoration as hd
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.logger import get_logger
@@ -39,7 +40,7 @@ class OnboardingService:
 
     def welcome_back(self, user: User) -> OnboardingStep:
         i18n = LocalizationService(user.language or DEFAULT_LANGUAGE)
-        name = user.first_name or "there"
+        name = hd.quote(user.first_name or "there")
         return OnboardingStep(
             text=i18n.t("start.welcome_back", name=name),
             clear_fsm=True,

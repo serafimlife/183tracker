@@ -12,12 +12,15 @@ Architecture (top → bottom):
 
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
+from typing import Any
 
-from aiogram import Bot, Dispatcher
+from aiogram import BaseMiddleware, Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.base import BaseStorage
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import TelegramObject, User
 
 from app.bot.config import get_settings
 from app.bot.logger import get_logger, setup_logging
@@ -26,6 +29,32 @@ from app.database.session import close_db, init_db
 from app.handlers import root_router
 
 logger = get_logger(__name__)
+
+
+class AllowlistMiddleware(BaseMiddleware):
+    """Drop updates from users not in the configured allowlist.
+
+    When ALLOWED_USER_IDS is empty every user is accepted (useful for
+    development). In production, set ALLOWED_USER_IDS to your own Telegram
+    user ID so strangers cannot interact with the bot.
+    """
+
+    def __init__(self, allowed_ids: frozenset[int]) -> None:
+        self._allowed_ids = allowed_ids
+
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        if not self._allowed_ids:
+            return await handler(event, data)
+        user: User | None = data.get("event_from_user")
+        if user is None or user.id not in self._allowed_ids:
+            logger.warning("blocked_user user_id=%s", user.id if user else "unknown")
+            return None
+        return await handler(event, data)
 
 
 async def on_startup(bot: Bot) -> None:
@@ -74,7 +103,8 @@ def create_dispatcher() -> Dispatcher:
     settings = get_settings()
     dp = Dispatcher(storage=_build_fsm_storage(settings))
 
-    # Outermost middleware wraps every update.
+    # Outermost middleware: drop updates from non-allowlisted users before anything else runs.
+    dp.update.middleware(AllowlistMiddleware(settings.allowed_user_id_set()))
     dp.update.middleware(DatabaseMiddleware())
 
     # Example: per-router middleware for a feature group

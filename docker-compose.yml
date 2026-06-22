@@ -4,8 +4,8 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      # Override DATABASE_URL so it points to the postgres service, not localhost
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/183days_bot
+      # Build DATABASE_URL from individual secrets so the password never appears in plain text here
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       postgres:
         condition: service_healthy
@@ -15,15 +15,15 @@ services:
     container_name: 183days_bot_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: 183days_bot
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # No ports: block — postgres is reachable only inside the compose network.
+    # Never expose 5432 to the host; that is how the container was compromised.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d 183days_bot"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5

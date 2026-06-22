@@ -30,6 +30,18 @@ class Settings(BaseSettings):
     # When set, FSM state is stored in Redis (required for multi-instance deployments).
     # Example: redis://localhost:6379/0
     redis_url: str | None = Field(default=None, alias="REDIS_URL")
+    # Comma-separated Telegram user IDs permitted to use the bot.
+    # Empty string disables the allowlist (any user accepted — not recommended in production).
+    allowed_user_ids: str = Field(default="", alias="ALLOWED_USER_IDS")
+
+    def allowed_user_id_set(self) -> frozenset[int]:
+        """Return parsed set of allowed Telegram user IDs (empty = no restriction)."""
+        ids: set[int] = set()
+        for part in self.allowed_user_ids.split(","):
+            part = part.strip()
+            if part.isdigit():
+                ids.add(int(part))
+        return frozenset(ids)
 
 
 @lru_cache

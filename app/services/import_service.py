@@ -1,6 +1,7 @@
 """CSV/XLSX import — parse, validate, persist travel history in bulk."""
 
 import csv
+import html
 import io
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -146,7 +147,7 @@ class ImportService:
                 result.errors.append(
                     ImportError(
                         row=i,
-                        message=f'unknown country "{country_input}", skipped.',
+                        message=f'unknown country "{html.escape(country_input)}", skipped.',
                     )
                 )
                 continue
